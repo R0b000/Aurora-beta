@@ -23,8 +23,6 @@ The backend is designed with secure API handling, proper folder structure, and s
 - CORS, Helmet, and Rate Limiting for security
 - Optimized API integration for the frontend
 
----
-
 ## 🧩 Tech Stack
 
 - **Frontend:** React.js (Vite), JavaScript, CSS  
@@ -32,34 +30,33 @@ The backend is designed with secure API handling, proper folder structure, and s
 - **Database:** MongoDB  
 - **Tools:** Git, JWT, REST APIs  
 
----
-
 ## 📁 Project Structure
+```markdown
+## 📁 Project Structure
+
+```
 Aurora/
-│── client/ # React frontend
-│── server/ # Node + Express backend
-│ ├──src 
-|   |── models/
-|   ├── services/
-|   ├── utility/
-|   ├── middleware/
-|   └── config/
+├── client/          # React frontend
+├── server/          # Node + Express backend
+│   └── src/
+│       ├── models/
+│       ├── services/
+│       ├── utility/
+│       ├── middleware/
+│       └── config/
 └── README.md
-
-
----
-
+```
+```
 ## 🖼️ Screenshots
 
-```html
-<img src="./images/homepage.png" width="600" />
-<img src="./images/homepage-1.png" width="600" />
-<img src="./images/Search.png" width="600" />
-<img src="./images/Cart.png" width="600" />
-<img src="./images/Order.png" width="600" />
-<img src="./images/Login.png" width="600" />
-<img src="./images/Register.png" width="600" />
-<img src="./images/AdminDashboard.png" width="600" />
+![Homepage](./images/homepage.png)
+![Homepage Alt](./images/homepage-1.png)
+![Search](./images/Search.png)
+![Cart](./images/Cart.png)
+![Order](./images/Order.png)
+![Login](./images/Login.png)
+![Register](./images/Register.png)
+![Admin Dashboard](./images/AdminDashboard.png)
 ```
 
 ## 🚀 Run Locally
