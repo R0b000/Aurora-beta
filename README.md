@@ -51,6 +51,12 @@ Aurora/
 ![Login](./images/Login.png)
 ![Register](./images/Register.png)
 ![Admin Dashboard](./images/AdminDashboard.png)
+![Admin User](./images/user.png)
+![Product View](./images/view.png)
+![Product View](./images/view_2.png)
+![Seller](./images/seller.png)
+![User Product](./images/user_product.png)
+![Admin Banner](./images/banners.png)
 
 ## 🚀 Run Locally
 # Backend
