@@ -31,9 +31,6 @@ The backend is designed with secure API handling, proper folder structure, and s
 - **Tools:** Git, JWT, REST APIs  
 
 ## 📁 Project Structure
-```markdown
-## 📁 Project Structure
-
 ```
 Aurora/
 ├── client/          # React frontend
@@ -46,7 +43,6 @@ Aurora/
 │       └── config/
 └── README.md
 ```
-```
 ## 🖼️ Screenshots
 
 ![Homepage](./images/homepage.png)
@@ -57,7 +53,6 @@ Aurora/
 ![Login](./images/Login.png)
 ![Register](./images/Register.png)
 ![Admin Dashboard](./images/AdminDashboard.png)
-```
 
 ## 🚀 Run Locally
 # Backend
