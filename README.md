@@ -4,8 +4,6 @@ Aurora Shop is a simple and modern e-commerce website built using the **MERN sta
 It includes core features like product listing, search functionality, user login/register, and a clean, responsive UI.  
 The backend is designed with secure API handling, proper folder structure, and smooth communication with the frontend.
 
----
-
 ## ✨ Features
 
 ### User Features
