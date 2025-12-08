@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/src/style.css" rel="stylesheet">
+    <title>Document</title>
+</head>
+<body>
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; background-color: #f9fafb; padding: 20px;">
+    <div style="max-width: 600px; margin: auto; background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+      <h2 style="color: #2b6cb0;">Hello ${username}, 👋</h2>
+      <p>Welcome to <strong>[Your App Name]</strong>! We’re excited to have you on board.</p>
+
+      <p>Before you can start using your account, please verify your email address by clicking the button below:</p>
+
+      <a href="${activationLink}" 
+         style="display: inline-block; padding: 12px 20px; background-color: #2b6cb0; color: white; border-radius: 5px; text-decoration: none; font-weight: bold;">
+         Activate My Account
+      </a>
+
+      <p style="margin-top: 20px;">If the button doesn’t work, you can also copy and paste the following link into your browser:</p>
+      <p style="color: #2b6cb0; word-break: break-all;">${activationLink}</p>
+
+      <hr style="margin: 25px 0;">
+      <p style="font-size: 14px; color: #666;">
+        If you didn’t create this account, you can safely ignore this email.
+      </p>
+
+      <p style="font-size: 14px; color: #999;">
+        Best regards,<br>
+        The <strong>[Your App Name]</strong> Team
+      </p>
+    </div>
+  </div>
+</body>
+</html>
