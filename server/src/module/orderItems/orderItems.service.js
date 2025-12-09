@@ -1,3 +1,4 @@
+const { countDocuments } = require("../banner/banner.model");
 const OrderModel = require("./orderItems.model");
 
 class OrderItemsService {
@@ -17,7 +18,7 @@ class OrderItemsService {
             orderDetails.shippingAddress = {
                 name: req.loggedInUser.name,
                 phone: req.loggedInUser.phone || null,
-                address: req.loggedInUser.addresses ||null
+                address: req.loggedInUser.addresses || null
             }
             orderDetails.billingAddress = orderDetails.shippingAddress
             orderDetails.paymentMethod = 'not defined'
@@ -44,7 +45,7 @@ class OrderItemsService {
         }
     }
 
-    saveOrderItems = async(data) => {
+    saveOrderItems = async (data) => {
         const orderItems = new OrderModel(data);
         return await orderItems.save();
     }
@@ -52,7 +53,7 @@ class OrderItemsService {
     orderList = async (data) => {
         const orderList = await OrderModel.find(data)
             .populate('items.product')
-        
+
         return orderList
     }
 

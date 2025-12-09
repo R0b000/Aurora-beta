@@ -12,6 +12,11 @@ const reviewValidation = require('../review/review.validation');
 userPublicRouter.get("/products", productCtrl.listProduct);
 userPublicRouter.get("/products/:id", productCtrl.getSingleProductById);
 userPublicRouter.get("/categories", categoryCtrl.listCategory);
+
+//Integrating Trending
+//For this I want to use the datas from the order section and then I want to add those products that are highly purchased
+// userPublicRouter.get('/trending', productCtrl.getTrendingProducts)
+
 userPublicRouter.get(
   "/categories/:id/products",
   categoryCtrl.listProductByCateogoryId

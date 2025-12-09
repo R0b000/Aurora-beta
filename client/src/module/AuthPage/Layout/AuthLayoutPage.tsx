@@ -40,7 +40,7 @@ const AuthLayoutPage = () => {
                     <div className="flex w-full h-[10vh] items-center justify-center absolute top-1">
                         <img src={Logo} alt="" className="w-[25vh] h-[5vh]" />
                     </div>
-                    <div className="flex bg-gray-300/50 rounded-xl">
+                    <div className="flex bg-gray-300/50 rounded-md">
                         <div className="flex flex-col w-100 h-[62vh] gap-5 p-2 py-4 md:w-140 md:h-[62vh] md:p-10 lg:w-[25vw] lg:h-[73vh]">
                             {!isActivate &&
                                 <div className="flex flex-col lg:gap-6 md:text-sm">
