@@ -59,6 +59,7 @@ class ProductService {
     getSingleProductById = async (data) => {
         const productDetails = await ProductModel.findById(data)
             .populate('category')
+            .populate('seller')
         return productDetails
     }
 

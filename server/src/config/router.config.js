@@ -3,6 +3,7 @@ const auth = require("../middleware/auth.middleware");
 const adminRouter = require("../module/admin/admin.router");
 const authRouter = require("../module/auth/auth.router");
 const cartRouter = require("../module/cart/cart.router");
+const chatRouter = require("../module/chat/chat.router");
 const paymentRoute = require("../module/payment/payment.route");
 const sellerRouter = require("../module/seller/seller.router");
 const userPublicRouter = require("../module/user/user.route");
@@ -19,5 +20,8 @@ route.use("/", userPublicRouter);
 
 //payment
 route.use("/payment", auth(userRoles.CUSTOMER), paymentRoute);
+
+//chat
+route.use('/chat', auth([userRoles.ADMIN, userRoles.CUSTOMER, userRoles.CUSTOMER]), chatRouter)
 
 module.exports = route;

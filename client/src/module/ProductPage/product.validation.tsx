@@ -1,6 +1,27 @@
+import type { Role } from "../AuthPage/auth.validation";
+
 export interface ProductDetailsInterface {
     _id: string,
-    seller: string,
+    seller: {
+        address: string[],
+        avatar: {
+            public_id: string, 
+            secure_url: string, 
+            optimized_url: string
+        },
+        email: string, 
+        favourites: string[],
+        isBan: boolean, 
+        isVerified: boolean, 
+        name: string,
+        phone: string, 
+        role: Role,
+        sellerProfile: {
+            rating: number, 
+            totalReview: number,
+        },
+        _id: string
+    },
     title: string,
     slug: string,
     description: string,

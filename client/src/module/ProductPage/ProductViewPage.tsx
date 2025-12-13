@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useEffect, useReducer, useState } from "react"
 import publicSvc from "../../service/public.service"
 import type { ProductDetailsInterface } from "./product.validation"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
@@ -15,13 +15,23 @@ import customerSvc from "../../service/customer.service"
 import ProductRecommendAddToCartPage from "./ProductRecommendAddToCartPage"
 import ProductReviewSection from "./ProductReviewSection"
 import { MdDashboard } from "react-icons/md"
-import { AiOutlineRight, AiOutlineUser } from "react-icons/ai"
+import { AiOutlineMessage, AiOutlineRight, AiOutlineUser } from "react-icons/ai"
 import { ImSpinner9 } from "react-icons/im"
+import MessagePage from "../Message/MessagePage"
 
 export interface ProductCartProps {
-  setCartClicked: React.Dispatch<React.SetStateAction<boolean>>;
-  setBuyClick: React.Dispatch<React.SetStateAction<boolean>>;
-  buyClick: boolean;
+    setCartClicked: React.Dispatch<React.SetStateAction<boolean>>;
+    setBuyClick: React.Dispatch<React.SetStateAction<boolean>>;
+    buyClick: boolean;
+}
+
+const messageReducer = (state: boolean, _action: any) => {
+    return !state
+}
+
+export interface ProductMessageProps {
+    setMessageClick: React.Dispatch<React.SetStateAction<boolean>>
+    productDetails: ProductDetailsInterface
 }
 
 const ProductViewPage = () => {
@@ -42,7 +52,7 @@ const ProductViewPage = () => {
     const [viewUser, setViewUser] = useState<boolean>(false)
     const [yesLoading, setYesLoading] = useState(false);
     const [noLoading, setNoLoading] = useState(false);
-
+    const [messageClick, setMessageClick] = useReducer(messageReducer, false)
 
     const fetchProductDetails = useCallback(async (id: string, signal?: AbortSignal) => {
         try {
@@ -50,7 +60,6 @@ const ProductViewPage = () => {
                 const response = await publicSvc.getProductById(id, signal);
                 setProductDetails(response.data.data)
                 setMaxIndexValue(response.data.data.images.length)
-
                 navigate(`/product/${id}`)
             } else {
                 const response = await publicSvc.getProductById(id, signal);
@@ -63,35 +72,34 @@ const ProductViewPage = () => {
         }
     }, [review])
 
-  const fetchProductList = useCallback(
-    async (id: string, signal?: AbortSignal) => {
-      try {
-        const response = await publicSvc.listProduct(id, signal);
-        setProductList(response.data.data);
+    const fetchProductList = useCallback(
+        async (id: string, signal?: AbortSignal) => {
+            try {
+                const response = await publicSvc.listProduct(id, signal);
+                setProductList(response.data.data);
 
-        if (loggedInUser?.role === "customer") {
-          const response = await customerSvc.listCart();
-          setCartProductIds(() =>
-            response.data.data.map((items: any) => items?.items?.product?._id)
-          );
-        }
-      } catch (error) {
-        if (
-          (error as any)?.name === "CanceledError" ||
-          (error as any)?.message === "canceled"
-        )
-          return;
-        throw error;
-      } finally {
-        if (!signal?.aborted) {
-          setIsLoading(false);
-        }
-      }
-    },
-    []
-  );
+                if (loggedInUser?.role === "customer") {
+                    const response = await customerSvc.listCart();
+                    setCartProductIds(() =>
+                        response.data.data.map((items: any) => items?.items?.product?._id)
+                    );
+                }
+            } catch (error) {
+                if (
+                    (error as any)?.name === "CanceledError" ||
+                    (error as any)?.message === "canceled"
+                )
+                    return;
+                throw error;
+            } finally {
+                if (!signal?.aborted) {
+                    setIsLoading(false);
+                }
+            }
+        },
+        []
+    );
 
-<<<<<<< HEAD
     const handleProductId = (id: string) => {
         try {
             setIsLoading(true);
@@ -99,39 +107,30 @@ const ProductViewPage = () => {
         } catch (error) {
             throw error
         }
-=======
-  const handleProductId = (id: string) => {
-    try {
-      setIsLoading(true);
-      navigate(`/v1/product/${id}`);
-    } catch (error) {
-      throw error;
->>>>>>> 5c4a0c87a585b9e9ed9d81d70f3ad136094c2097
     }
-  };
 
-  const addToCartClick = (id: string) => {
-    try {
-      if (!loggedInUser) {
-        navigate("/auth/login");
-      }
-      setCartClicked(true);
-      navigate(`?id=${id}&type=cart`);
-    } catch (error) {
-      throw error;
-    }
-  };
+    const addToCartClick = (id: string) => {
+        try {
+            if (!loggedInUser) {
+                navigate("/auth/login");
+            }
+            setCartClicked(true);
+            navigate(`?id=${id}&type=cart`);
+        } catch (error) {
+            throw error;
+        }
+    };
 
-  const directPayment = async () => {
-    try {
-      setCartClicked(true);
-      navigate(`?id=${productDetails._id}&type=buy`);
-      setBuyClick(true);
-    } catch (error) {
-      console.log(error);
-      throw error;
-    }
-  };
+    const directPayment = async () => {
+        try {
+            setCartClicked(true);
+            navigate(`?id=${productDetails._id}&type=buy`);
+            setBuyClick(true);
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+    };
 
     const handleRouting = () => {
         if (loggedInUser?.role === 'admin') {
@@ -145,22 +144,18 @@ const ProductViewPage = () => {
         if (id) {
             const controller = new AbortController();
 
-      // trigger both requests and allow abort on cleanup
-      fetchProductDetails(id, controller.signal);
-      fetchProductList(id, controller.signal);
+            // trigger both requests and allow abort on cleanup
+            fetchProductDetails(id, controller.signal);
+            fetchProductList(id, controller.signal);
 
-      return () => controller.abort();
-    }
-  }, [id, fetchProductDetails, fetchProductList]);
+            return () => controller.abort();
+        }
+    }, [id, fetchProductDetails, fetchProductList]);
 
-  return (
-    <>
-      {isLoading ? (
-        ""
-      ) : (
+    return (
         <>
             {isLoading ? "" :
-                <>
+                <div className="flex flex-col gap-2">
                     <div className="flex flex-col w-full h-full">
                         <HeaderComponent />
                         <div className="flex w-full gap-2 items-center justify-center">
@@ -428,199 +423,189 @@ const ProductViewPage = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                      </>
-                                    ) : cartProductIds?.includes(item._id) ? (
-                                      <h2 className="flex w-full border-gray-400 bg-teal-400 text-sm rounded-md lg:w-[10vw] md:w-[20vw] md:h-[4vh] lg:h-[6vh] text-white p-2 font-semibold items-center justify-center transition-all duration-500 h-[6vh] header-title">
-                                        ADDED TO CART
-                                      </h2>
-                                    ) : (
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          addToCartClick(item._id);
-                                        }}
-                                        className="flex w-full border-gray-400 bg-orange-400 text-sm rounded-md text-white p-2 font-semibold items-center justify-center transition-all duration-500 h-[6vh] header-title lg:w-[10vw] md:w-[20vw] md:h-[4vh] lg:h-[6vh]"
-                                      >
-                                        ADD TO CART
-                                      </button>
-                                    ))}
+                                    </div>
                                 </div>
-                              </div>
                             </div>
                         </div>
-                        <div className="w-full bg-gray-900 text-gray-300 py-10 px-5">
-                            <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+                    </div>
+                    <div className="w-full bg-gray-900 text-gray-300 py-10 px-5">
+                        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
 
-                                {/* Column 1 */}
-                                <div>
-                                    <h3 className="text-lg font-semibold text-white mb-4">Customer Service</h3>
-                                    <ul className="space-y-2 text-sm">
-                                        <li className="cursor-pointer hover:text-white">Help & FAQs</li>
-                                        <li className="cursor-pointer hover:text-white">Shipping Information</li>
-                                        <li className="cursor-pointer hover:text-white">Returns & Refunds</li>
-                                        <li className="cursor-pointer hover:text-white">Track Order</li>
-                                    </ul>
-                                </div>
-
-                                {/* Column 2 */}
-                                <div>
-                                    <h3 className="text-lg font-semibold text-white mb-4">Company</h3>
-                                    <ul className="space-y-2 text-sm">
-                                        <li className="cursor-pointer hover:text-white">About Us</li>
-                                        <li className="cursor-pointer hover:text-white">Careers</li>
-                                        <li className="cursor-pointer hover:text-white">Press</li>
-                                        <li className="cursor-pointer hover:text-white">Affiliate Program</li>
-                                    </ul>
-                                </div>
-
-                                {/* Column 3 */}
-                                <div>
-                                    <h3 className="text-lg font-semibold text-white mb-4">Connect</h3>
-                                    <ul className="space-y-2 text-sm">
-                                        <li className="cursor-pointer hover:text-white">Contact Us</li>
-                                        <li className="cursor-pointer hover:text-white">Store Locator</li>
-                                        <li className="cursor-pointer hover:text-white">Support</li>
-                                        <li className="cursor-pointer hover:text-white">Partner With Us</li>
-                                    </ul>
-                                </div>
-
-                                {/* Column 4 */}
-                                <div>
-                                    <h3 className="text-lg font-semibold text-white mb-4">Legal</h3>
-                                    <ul className="space-y-2 text-sm">
-                                        <li className="cursor-pointer hover:text-white">Privacy Policy</li>
-                                        <li className="cursor-pointer hover:text-white">Terms & Conditions</li>
-                                        <li className="cursor-pointer hover:text-white">Cookie Policy</li>
-                                        <li className="cursor-pointer hover:text-white">Disclaimer</li>
-                                    </ul>
-                                </div>
-
+                            {/* Column 1 */}
+                            <div>
+                                <h3 className="text-lg font-semibold text-white mb-4">Customer Service</h3>
+                                <ul className="space-y-2 text-sm">
+                                    <li className="cursor-pointer hover:text-white">Help & FAQs</li>
+                                    <li className="cursor-pointer hover:text-white">Shipping Information</li>
+                                    <li className="cursor-pointer hover:text-white">Returns & Refunds</li>
+                                    <li className="cursor-pointer hover:text-white">Track Order</li>
+                                </ul>
                             </div>
 
-                            {/* Bottom section */}
-                            <div className="border-t border-gray-700 mt-8 pt-5 text-center text-sm text-gray-500">
-                                © {new Date().getFullYear()} YourCompany. All rights reserved.
+                            {/* Column 2 */}
+                            <div>
+                                <h3 className="text-lg font-semibold text-white mb-4">Company</h3>
+                                <ul className="space-y-2 text-sm">
+                                    <li className="cursor-pointer hover:text-white">About Us</li>
+                                    <li className="cursor-pointer hover:text-white">Careers</li>
+                                    <li className="cursor-pointer hover:text-white">Press</li>
+                                    <li className="cursor-pointer hover:text-white">Affiliate Program</li>
+                                </ul>
                             </div>
+
+                            {/* Column 3 */}
+                            <div>
+                                <h3 className="text-lg font-semibold text-white mb-4">Connect</h3>
+                                <ul className="space-y-2 text-sm">
+                                    <li className="cursor-pointer hover:text-white">Contact Us</li>
+                                    <li className="cursor-pointer hover:text-white">Store Locator</li>
+                                    <li className="cursor-pointer hover:text-white">Support</li>
+                                    <li className="cursor-pointer hover:text-white">Partner With Us</li>
+                                </ul>
+                            </div>
+
+                            {/* Column 4 */}
+                            <div>
+                                <h3 className="text-lg font-semibold text-white mb-4">Legal</h3>
+                                <ul className="space-y-2 text-sm">
+                                    <li className="cursor-pointer hover:text-white">Privacy Policy</li>
+                                    <li className="cursor-pointer hover:text-white">Terms & Conditions</li>
+                                    <li className="cursor-pointer hover:text-white">Cookie Policy</li>
+                                    <li className="cursor-pointer hover:text-white">Disclaimer</li>
+                                </ul>
+                            </div>
+
                         </div>
-                        <div className="lg:hidden">
-                            {menuClick && (
-                                <div
-                                    onClick={() => setMenuClick(false)}
-                                    className="fixed inset-0 bg-black/70 z-2 w-full h-full top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2"
-                                >
 
-                                </div>
-                            )}
-                            {menuClick && (
-                                <div className="fixed top-1/2 -translate-y-1/2 left-1/2 z-3 -translate-x-1/2 text-justify p-4 pt-10 h-[60vh] w-[75vw] md:h-[50vh] md:w-[60vw] text-white font-bold text-sm title-header bg-black/50">
-                                    <Sidebar />
-                                </div>
-                            )}
+                        {/* Bottom section */}
+                        <div className="border-t border-gray-700 mt-8 pt-5 text-center text-sm text-gray-500">
+                            © {new Date().getFullYear()} YourCompany. All rights reserved.
                         </div>
-                        {cartClicked &&
-                            <>
-                                <div
-                                    onClick={() => setCartClicked(false)}
-                                    className="fixed inset-0 w-full h-full bg-black/50 z-2"
-                                >
-
-                {/* Bottom section */}
-                <div className="border-t border-gray-700 mt-8 pt-5 text-center text-sm text-gray-500">
-                  © {new Date().getFullYear()} YourCompany. All rights reserved.
-                </div>
-              </div>
-            </div>
-            {menuClick && (
-              <div
-                onClick={() => setMenuClick(false)}
-                className="fixed inset-0 bg-black/70 z-2 w-full h-full top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2"
-              ></div>
-            )}
-            {menuClick && (
-              <div className="fixed top-1/2 -translate-y-1/2 left-1/2 z-3 -translate-x-1/2 text-justify p-4 pt-10 h-[70vh] w-[95vw] text-white font-bold text-sm title-header bg-black/50">
-                <Sidebar />
-              </div>
-            )}
-            {cartClicked && (
-              <>
-                <div
-                  onClick={() => setCartClicked(false)}
-                  className="fixed inset-0 w-full h-full bg-black/50 z-2"
-                ></div>
-
-                                <div className="fixed top-1/2 -translate-y-1/2 left-1/2 z-3 -translate-x-1/2 text-justify p-4 h-[60vh] w-[90vw] md:w-[60vw] lg:w-[30vw] md:h-auto font-bold text-sm title-header bg-black/20 rounded-xl">
-                                    <ProductRecommendAddToCartPage setCartClicked={setCartClicked} />
-                                </div>
-                            </>
-                        }
-
-                        {viewUser && (
+                    </div>
+                    <div className="lg:hidden">
+                        {menuClick && (
                             <div
-                                className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 rounded-md p-2"
-                                onClick={() => setViewUser(false)}
+                                onClick={() => setMenuClick(false)}
+                                className="fixed inset-0 bg-black/70 z-2 w-full h-full top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2"
                             >
-                                {/* Stop click from closing when clicking inside the box */}
-                                <div
-                                    className="bg-white text-black p-4 rounded-xl shadow-xl w-[400px]"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <div className="flex flex-col items-center justify-center">
-                                        <AiOutlineUser size={45} />
-                                        <h2 className="text-xl font-semibold mb-2 header-title">{loggedInUser?.name}</h2>
-                                        <h3 className="text-xl font-semibold mb-2 header-title">{loggedInUser?.email}</h3>
-                                    </div>
-                                    <div className="flex flex-col w-full gap-1 p-2">
-                                        <h3 className="flex w-full header-title text-xl">Logout</h3>
-                                        <div className="flex gap-5">
-                                            {/* YES button */}
-                                            <button
-                                                onClick={() => {
-                                                    setYesLoading(true);
-                                                    setViewUser(false);
-                                                    localStorage.clear();
-                                                    setLoggedInUser(null);
 
-                                                    setTimeout(() => {
-                                                        navigate('/');
-                                                        setYesLoading(false);
-                                                    }, 1000);
-                                                }}
-                                                className="mt-[3vh] relative bg-green-700 text-white px-3 py-1 rounded-lg w-[50%] h-[5vh] cursor-pointer flex items-center justify-center"
-                                            >
-                                                {yesLoading ? (
-                                                    <ImSpinner9 className="animate-spin text-white text-xl" />
-                                                ) : (
-                                                    "YES"
-                                                )}
-                                            </button>
-
-                                            {/* NO button */}
-                                            <button
-                                                onClick={() => {
-                                                    setNoLoading(true);
-                                                    setViewUser(false);
-                                                    setTimeout(() => setNoLoading(false), 600);
-                                                }}
-                                                className="mt-[3vh] relative bg-green-700 text-white px-3 py-1 rounded-lg w-[50%] h-[5vh] cursor-pointer flex items-center justify-center"
-                                            >
-                                                {noLoading ? (
-                                                    <ImSpinner9 className="animate-spin text-white text-xl" />
-                                                ) : (
-                                                    "NO"
-                                                )}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                            </div>
+                        )}
+                        {menuClick && (
+                            <div className="fixed top-1/2 -translate-y-1/2 left-1/2 z-3 -translate-x-1/2 text-justify p-4 pt-10 h-[60vh] w-[75vw] md:h-[50vh] md:w-[60vw] text-white font-bold text-sm title-header bg-black/50">
+                                <Sidebar />
                             </div>
                         )}
                     </div>
-                </>
+                    {cartClicked &&
+                        <div>
+                            <div
+                                onClick={() => setCartClicked(false)}
+                                className="fixed inset-0 w-full h-full bg-black/50 z-2"
+                            >
+
+                                {/* Bottom section */}
+                                <div className="border-t border-gray-700 mt-8 pt-5 text-center text-sm text-gray-500">
+                                    © {new Date().getFullYear()} YourCompany. All rights reserved.
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    {cartClicked && (
+                        <>
+                            <div
+                                onClick={() => setCartClicked(false)}
+                                className="fixed inset-0 w-full h-full bg-black/50 z-2"
+                            ></div>
+
+                            <div className="fixed top-1/2 -translate-y-1/2 left-1/2 z-3 -translate-x-1/2 text-justify p-4 h-[60vh] w-[90vw] md:w-[60vw] lg:w-[30vw] md:h-auto font-bold text-sm title-header bg-black/20 rounded-xl">
+                                <ProductRecommendAddToCartPage setCartClicked={setCartClicked} />
+                            </div>
+                        </>
+                    )}
+
+                    {viewUser && (
+                        <div
+                            className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 rounded-md p-2"
+                            onClick={() => setViewUser(false)}
+                        >
+                            {/* Stop click from closing when clicking inside the box */}
+                            <div
+                                className="bg-white text-black p-4 rounded-xl shadow-xl w-[400px]"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="flex flex-col items-center justify-center">
+                                    <AiOutlineUser size={45} />
+                                    <h2 className="text-xl font-semibold mb-2 header-title">{loggedInUser?.name}</h2>
+                                    <h3 className="text-xl font-semibold mb-2 header-title">{loggedInUser?.email}</h3>
+                                </div>
+                                <div className="flex flex-col w-full gap-1 p-2">
+                                    <h3 className="flex w-full header-title text-xl">Logout</h3>
+                                    <div className="flex gap-5">
+                                        {/* YES button */}
+                                        <button
+                                            onClick={() => {
+                                                setYesLoading(true);
+                                                setViewUser(false);
+                                                localStorage.clear();
+                                                setLoggedInUser(null);
+
+                                                setTimeout(() => {
+                                                    navigate('/');
+                                                    setYesLoading(false);
+                                                }, 1000);
+                                            }}
+                                            className="mt-[3vh] relative bg-green-700 text-white px-3 py-1 rounded-lg w-[50%] h-[5vh] cursor-pointer flex items-center justify-center"
+                                        >
+                                            {yesLoading ? (
+                                                <ImSpinner9 className="animate-spin text-white text-xl" />
+                                            ) : (
+                                                "YES"
+                                            )}
+                                        </button>
+
+                                        {/* NO button */}
+                                        <button
+                                            onClick={() => {
+                                                setNoLoading(true);
+                                                setViewUser(false);
+                                                setTimeout(() => setNoLoading(false), 600);
+                                            }}
+                                            className="mt-[3vh] relative bg-green-700 text-white px-3 py-1 rounded-lg w-[50%] h-[5vh] cursor-pointer flex items-center justify-center"
+                                        >
+                                            {noLoading ? (
+                                                <ImSpinner9 className="animate-spin text-white text-xl" />
+                                            ) : (
+                                                "NO"
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {messageClick ? (
+                        <div className="fixed bottom-10 right-10 z-40 text-black font-semibold text-shadow-sm">
+                            <div className="gap-2 flex items-center bg-gray-300 justify-center w-full text-sm lg:text-base p-2 rounded-md">
+                                <MessagePage setMessageClick={setMessageClick} productDetails={productDetails}/>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="fixed bottom-10 right-10 z-30 text-white font-semibold text-shadow-sm">
+                            <div
+                                className="flex gap-2 items-center bg-green-600 justify-center w-full text-sm lg:text-base p-2 rounded-md cursor-pointer hover:scale-110 duration-300 transition-all"
+                                onClick={setMessageClick}
+                            >
+                                <AiOutlineMessage className="text-xl lg:text-2xl" />Seller
+                            </div>
+                        </div>
+                    )}
+                </div>
             }
         </>
-      )}
-    </>
-  );
-};
+    )
+}
 
 export default ProductViewPage;

@@ -18,7 +18,9 @@ const PORT = process.env.PORT || 8001;
 const URL = '0.0.0.0'
 const httpServer = http.createServer(app);
 
-const io = new Server(httpServer, {})
+const io = new Server(httpServer, {
+    cors: ['http://localhost:5173']
+})
 
 io.on('connection', (socket) => {
     console.log('Connected:', socket.id);

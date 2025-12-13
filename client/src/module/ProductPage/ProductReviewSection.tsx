@@ -4,7 +4,7 @@ import { AiOutlineUser, AiOutlineEdit, AiOutlineDelete } from "react-icons/ai";
 import toast, { Toaster } from "react-hot-toast";
 import { useAppContext } from "../../context/AppContext";
 
-const API_BASE = import.meta.env.VITE_BASE_URL || "http://127.0.0.1:8001/api";
+const API_BASE = import.meta.env.VITE_BASE_URL || "http://localhost:8001/api";
 
 interface Review {
   _id: string;
