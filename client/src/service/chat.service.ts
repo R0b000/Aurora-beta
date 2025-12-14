@@ -8,6 +8,24 @@ class ChatService {
 
         return response
     }
+
+    createMessage = async(sender: string, conversation: string, data:any ) => {
+        const response = await axiosConfig.post('/chat/message', data, {
+            params: {
+                sender: sender, 
+                conversation: conversation
+        }})
+
+        console.log(response)
+        return response
+    }
+
+    listMessage = async() => {
+        const response = await axiosConfig.get('/chat/message/list')
+
+        console.log(response.data)
+        return response
+    }
 }
 
 const chatSvc = new ChatService();

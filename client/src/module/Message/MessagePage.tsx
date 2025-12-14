@@ -5,6 +5,8 @@ import { AiOutlineAntDesign, AiOutlineCheck, AiOutlineClose, AiOutlineCopy, AiOu
 import type { ProductMessageProps } from '../ProductPage/ProductViewPage';
 import { io } from 'socket.io-client'
 import chatSvc from '../../service/chat.service';
+import { Controller, useForm } from 'react-hook-form';
+import { useAppContext } from '../../context/AppContext';
 
 const actionItems = [
     {
@@ -53,17 +55,13 @@ const MessagePage = ({ setMessageClick, productDetails }: ProductMessageProps) =
     const [loading, setLoading] = useState<boolean>(false);
     const [items, set, _add, update] = useBubbleList([]);
     const listRef = React.useRef<GetRef<typeof Bubble.List>>(null);
+    const [connected, setConnected] = useState<boolean>(false)
+    const { loggedInUser } = useAppContext();
+    const [conversationId, setConversationId] = useState<string>();
 
     const socket = io('http://localhost:8001');
 
-    console.log(productDetails)
-
-    socket.on('connect', () => {
-        console.log(socket.id)
-    })
-
     socket.on("disconnect", () => {
-        console.log(socket.id);
         message.info('Disconnected')
     });
 
@@ -99,6 +97,12 @@ const MessagePage = ({ setMessageClick, productDetails }: ProductMessageProps) =
         [],
     );
 
+    const { control, handleSubmit } = useForm({
+        defaultValues: {
+            message: ''
+        }
+    })
+
     // Initial messages (optional)
     useEffect(() => {
         set([
@@ -114,7 +118,7 @@ const MessagePage = ({ setMessageClick, productDetails }: ProductMessageProps) =
         if (loading) {
             const timer = setTimeout(() => {
                 setLoading(false);
-                antdMessage.success('Send message successfully!');
+                message.success('Send message successfully!');
             }, 3000);
             return () => {
                 clearTimeout(timer);
@@ -123,7 +127,28 @@ const MessagePage = ({ setMessageClick, productDetails }: ProductMessageProps) =
     }, [loading]);
 
     const createRoom = async (id: string) => {
-        await chatSvc.createRoom(id)
+        const response = await chatSvc.createRoom(id)
+
+        let conversationId = response.data.data._id
+
+        socket.emit('join-room', (conversationId))
+
+        socket.on('joined-room', (conversationId) => {
+            message.info(`Connected to room ${conversationId}`);
+            setConnected(true)
+            setConversationId(conversationId)
+        })
+    }
+
+    const submitSend = async (data: { message: string }) => {
+        if (!connected) {
+            message.warning('Connecting...')
+        }
+        setLoading(true)
+
+        if (loggedInUser && conversationId) {
+            await chatSvc.createMessage(loggedInUser?._id, conversationId, data)
+        }
     }
 
     useEffect(() => {
@@ -140,23 +165,28 @@ const MessagePage = ({ setMessageClick, productDetails }: ProductMessageProps) =
             </div>
             <div className='flex flex-col'>
                 <Bubble.List ref={listRef} style={{ height: 300, width: 300 }} role={memoRole} items={items} />
-                <Sender
-                    loading={loading}
-                    value={value}
-                    onChange={(v) => {
-                        setValue(v);
-                    }}
-                    onSubmit={() => {
-                        setValue('');
-                        setLoading(true);
-                        antdMessage.info('Send message!');
-                    }}
-                    onCancel={() => {
-                        setLoading(false);
-                        antdMessage.error('Cancel sending!');
-                    }}
-                    autoSize={{ minRows: 1, maxRows: 6 }}
-                />
+                <form onSubmit={handleSubmit(submitSend)}>
+                    <Controller
+                        name="message"
+                        control={control}
+                        render={({ field }) => (
+                            <Sender
+                                {...field}
+                                loading={loading}
+                                value={value}
+                                onChange={(v) => {
+                                    setValue(v);
+                                }}
+                                onSubmit={() => submitSend({ message: value })}
+                                onCancel={() => {
+                                    setLoading(false);
+                                    antdMessage.error('Cancel sending!');
+                                }}
+                                autoSize={{ minRows: 1, maxRows: 6 }}
+                            />
+                        )}
+                    />
+                </form>
             </div>
         </div>
     );

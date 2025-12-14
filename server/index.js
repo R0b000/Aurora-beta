@@ -25,18 +25,13 @@ const io = new Server(httpServer, {
 io.on('connection', (socket) => {
     console.log('Connected:', socket.id);
 
-    socket.emit('welcome', "Welcome to the server!");
+    socket.on('join-room', (conversationId) => {
+        socket.join(conversationId);
+        console.log('Members connected to the room')
 
-    socket.on('message', (msg) => {
-        console.log('Message from client', msg)
-    })
-
-    socket.on('disconnect', () => {
-        console.log("Disconnected:", socket.id)
+        socket.emit('joined-room', conversationId)
     })
 })
-
-app.set('io', io)
 
 httpServer.listen(PORT, URL, () => {
     console.log(`Server running on port ${PORT}`);

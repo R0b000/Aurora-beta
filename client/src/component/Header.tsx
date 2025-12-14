@@ -4,8 +4,9 @@ import MobileLogo from '../assets/mobile_logo.png'
 import { useEffect, useState } from "react"
 import { Input } from "antd"
 import { useAppContext } from "../context/AppContext"
-import { AiOutlineCloseCircle, AiOutlineMenuFold, AiOutlineMenuUnfold, AiOutlineShopping } from "react-icons/ai"
+import { AiOutlineCloseCircle, AiOutlineMenuFold, AiOutlineMenuUnfold, AiOutlineMessage, AiOutlineShopping } from "react-icons/ai"
 import { useNavigate } from "react-router-dom"
+import ViewMessagePage from "../module/Message/ViewMessagePage"
 
 const { Search } = Input;
 
@@ -14,6 +15,7 @@ const HeaderComponent = () => {
     const [hidden, setHidden] = useState<boolean>(false);
     const navigate = useNavigate();
     const isShop = location.pathname.includes('orders')
+    const [messageClick, setMessageClick] = useState<boolean>()
 
     const handleSearchClick = () => {
         setSearchClick(true)
@@ -54,11 +56,14 @@ const HeaderComponent = () => {
                 }} alt="aurora-logo" className='h-[3vh] w-[27vw] md:w-auto md:h-[2vh] cursor-pointer' />
                 <div className="flex gap-4">
                     {!isShop &&
-                        <IoMdSearch onClick={handleSearchClick}
-                            className={` text-2xl cursor-pointer
+                        <>
+                            <IoMdSearch onClick={handleSearchClick}
+                                className={` text-2xl cursor-pointer
                                 ${searchClick ? "hidden" : ""}   
                             `}
-                        />
+                            />
+                            <AiOutlineMessage onClick={() => { setMessageClick(prev => !prev) }} className="text-2xl cursor-pointer" />
+                        </>
                     }
 
                     {loggedInUser === null &&
@@ -111,7 +116,12 @@ const HeaderComponent = () => {
                             setSearchValue('')
                         }} className="text-xl lg:text-3xl text-red-800 cursor-pointer" />
                     </div>
-                </div>}
+                </div>
+            }
+
+            {messageClick &&
+                <ViewMessagePage />
+            }
         </>
     )
 }
