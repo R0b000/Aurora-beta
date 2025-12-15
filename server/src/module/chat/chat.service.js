@@ -16,8 +16,7 @@ class ChatService {
         const conversation = await conversationModel.find({
             members: req.loggedInUser._id
         })
-
-        console.log('Testing', conversation)
+        .populate('members')
 
         const conversationIds = conversation.map(c => c._id)
 
@@ -26,8 +25,14 @@ class ChatService {
         const messages = await messageModel.find({
             conversation: {$in: conversationIds}
         })
+        .populate('sender')
 
-        return messages
+        return {messages, conversation}
+    }
+
+    listRoomMessages = async (data) => {
+        const response = await messageModel.find(data)
+        return response;
     }
 }
 

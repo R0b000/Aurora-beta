@@ -42,38 +42,59 @@ class ChatController {
 
     createMessage = async (req, res, next) => {
         try {
-            let {conversation, sender} = req.query
+            let { conversation, sender } = req.query
             const text = req.body.message
             console.log('Backend query datas', conversation, sender, text)
 
             const data = {
-                conversation: conversation, 
-                sender: sender, 
+                conversation: conversation,
+                sender: sender,
                 text: text
             }
 
             const response = await chatSvc.saveMessage(data);
 
             res.json({
-                data: response, 
-                code: 200, 
+                data: response,
+                code: 200,
                 status: 'Success',
                 message: 'Success'
             })
-        } catch (error){ 
+        } catch (error) {
             console.log(error)
         }
     }
 
     listMessage = async (req, res, next) => {
         try {
-            const messageList = await chatSvc.listMessage(req)
+            const { messages, conversation } = await chatSvc.listMessage(req)
 
             res.json({
-                data: messageList, 
-                code: 200, 
+                data: {
+                    messages, conversation
+                },
+                code: 200,
                 message: "Success",
                 status: "Success"
+            })
+        } catch (error) {
+            throw error
+        }
+    }
+
+    listRoomMessages = async (req, res, next) => {
+        try {   
+            const id = req.params.id;
+
+            const response = await chatSvc.listRoomMessages({
+                conversation: id
+            })
+
+            res.json({
+                data: response, 
+                code:200,
+                status: 'Success',
+                message: 'Success'
             })
         } catch (error) {
             throw error

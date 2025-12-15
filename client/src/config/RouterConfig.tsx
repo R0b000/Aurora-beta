@@ -3,6 +3,7 @@ import { Suspense, lazy } from "react"
 
 import HomePage from "../module/HomePage/HomePage"
 import HomePageLayout from "../module/HomePage/Layout/HomePageLayout"
+import ViewMessagePage from "../module/Message/ViewMessagePage"
 
 const ProductViewLayout = lazy(() => import("../module/ProductPage/Layout/ProductViewLayout"))
 const ProductViewPage = lazy(() => import("../module/ProductPage/ProductViewPage"))
@@ -53,7 +54,7 @@ const router = createBrowserRouter([
                 Component: ProductViewLayout,
                 children: [{ index: true, Component: ProductViewPage }]
             },
-            { path: 'product/more', Component: MoreProductPage }
+            { path: 'product/more', Component: MoreProductPage },
         ]
     },
 

@@ -62,7 +62,12 @@ const HeaderComponent = () => {
                                 ${searchClick ? "hidden" : ""}   
                             `}
                             />
-                            <AiOutlineMessage onClick={() => { setMessageClick(prev => !prev) }} className="text-2xl cursor-pointer" />
+                            <AiOutlineMessage onClick={() => {
+                                if(!loggedInUser) {
+                                    navigate('/auth/login')
+                                } 
+                                setMessageClick(prev => !prev) 
+                                }} className="text-2xl cursor-pointer" />
                         </>
                     }
 
