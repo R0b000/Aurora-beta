@@ -57,6 +57,7 @@ Aurora/
 ![Seller](./images/seller.png)
 ![User Product](./images/user_product.png)
 ![Admin Banner](./images/banners.png)
+[Watch Demo Video](https://youtu.be/m6407hAnaXg?si=TFKIThi-KbHoygJG)
 
 ## 🚀 Run Locally
 # Backend
