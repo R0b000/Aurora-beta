@@ -1,5 +1,5 @@
 import { Actions, Bubble, Sender, type BubbleItemType, type BubbleListProps } from '@ant-design/x';
-import { App, Avatar, message, type GetRef } from 'antd';
+import { App, Avatar, message as antdMessage, type GetRef } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { AiOutlineAntDesign, AiOutlineCheck, AiOutlineClose, AiOutlineCopy, AiOutlineEdit, AiOutlineRedo, AiOutlineUser } from 'react-icons/ai';
 import type { ProductMessageProps } from '../ProductPage/ProductViewPage';
@@ -20,18 +20,6 @@ const actionItems = [
         label: 'Copy',
     },
 ];
-
-let id = 0;
-const getKey = () => `bubble_${id++}`;
-
-const genItem = (isAI: boolean, config?: Partial<BubbleItemType>): BubbleItemType => {
-    return {
-        key: getKey(),
-        role: isAI ? 'ai' : 'user',
-        content: isAI ? 'AI response...' : 'User message...',
-        ...config,
-    };
-};
 
 function useBubbleList(initialItems: BubbleItemType[] = []) {
     const [items, setItems] = React.useState<BubbleItemType[]>(initialItems);
@@ -59,11 +47,9 @@ const MessagePage = ({ setMessageClick, productDetails }: ProductMessageProps) =
     const { loggedInUser } = useAppContext();
     const [conversationId, setConversationId] = useState<string>();
 
-    const socket = io('http://localhost:8001');
-
-    socket.on("disconnect", () => {
-        message.info('Disconnected')
-    });
+    const socket = React.useMemo(() =>
+        io('http://localhost:8001')
+        , [])
 
     const memoRole: BubbleListProps['role'] = React.useMemo(
         () => ({
@@ -103,22 +89,12 @@ const MessagePage = ({ setMessageClick, productDetails }: ProductMessageProps) =
         }
     })
 
-    // Initial messages (optional)
-    useEffect(() => {
-        set([
-            genItem(false, { typing: false }),
-            genItem(true, { typing: false }),
-        ]);
-    }, []);
-
-    const { message: antdMessage } = App.useApp();
-
     // Mock send message
     React.useEffect(() => {
         if (loading) {
             const timer = setTimeout(() => {
                 setLoading(false);
-                message.success('Send message successfully!');
+                antdMessage.success('Send message successfully!');
             }, 3000);
             return () => {
                 clearTimeout(timer);
@@ -126,34 +102,108 @@ const MessagePage = ({ setMessageClick, productDetails }: ProductMessageProps) =
         }
     }, [loading]);
 
+    const getRoleFromMessage = (msg: any) => {
+        const senderId = 
+            typeof msg.sender === 'string' 
+            ? msg.sender : msg.sender?._id;
+
+        return senderId === loggedInUser?._id ? "user" : 'ai'
+    }
+
+    const mapMessagesToBubbles = (messages: any[]) => {
+        return messages.map((msg) => ({
+            key: msg._id,
+            role: getRoleFromMessage(msg),
+            content: msg.text,
+            typing: false,
+        }));
+    };
+
     const createRoom = async (id: string) => {
-        const response = await chatSvc.createRoom(id)
+        try {
+            const response = await chatSvc.createRoom(id)
 
-        let conversationId = response.data.data._id
+            let conversationId = response.data.data._id
 
-        socket.emit('join-room', (conversationId))
+            socket.emit('join-room', (conversationId))
 
-        socket.on('joined-room', (conversationId) => {
-            message.info(`Connected to room ${conversationId}`);
-            setConnected(true)
-            setConversationId(conversationId)
-        })
+            socket.on('joined-room', (conversationId) => {
+                antdMessage.info(`Connected!`);
+                setConnected(true)
+                setConversationId(conversationId)
+            })
+
+            const roomMessages = await chatSvc.getMessages(conversationId)
+            const bubbles = mapMessagesToBubbles(roomMessages.data.data)
+            set(bubbles)
+        } catch (error) {
+            antdMessage.error('Failed to load messages.')
+        }
     }
 
     const submitSend = async (data: { message: string }) => {
         if (!connected) {
-            message.warning('Connecting...')
+            antdMessage.warning('Connecting...')
         }
         setLoading(true)
+
+        let text = data.message
+        console.log(text)
 
         if (loggedInUser && conversationId) {
             await chatSvc.createMessage(loggedInUser?._id, conversationId, data)
         }
+
+        if (!data.message || !conversationId) return;
+
+        _add({
+            key: Date.now(), 
+            role: 'user',
+            content: text
+        })
+
+        setValue('');
+
+        if(loggedInUser) {
+            await chatSvc.createMessage(loggedInUser?._id, conversationId, {message: text})
+        }
+
+        socket.emit('send-message', {
+            conversationId, 
+            text, 
+            sender: loggedInUser?._id
+        })
     }
 
     useEffect(() => {
         createRoom(productDetails.seller._id)
     }, [productDetails])
+
+    useEffect(() => {
+        if(!conversationId) return; 
+
+        socket.on('receive-message', (msg) => {
+            _add({
+                key: msg._id,
+                role: getRoleFromMessage(msg),
+                content: msg.text,
+            });
+        })
+
+        return () => {
+            socket.off('receive-message');
+        };
+    }, [conversationId])
+
+    useEffect(() => {
+        socket.on("disconnect", () => {
+            antdMessage.info('Disconnected');
+        });
+
+        return () => {
+            socket.off("disconnect");
+        };
+    }, []);
 
     return (
         <div className='flex flex-col p-2 w-full'>
@@ -164,7 +214,7 @@ const MessagePage = ({ setMessageClick, productDetails }: ProductMessageProps) =
                 <AiOutlineClose onClick={() => setMessageClick(false)} className='text-xl lg:text-2xl cursor-pointer hover:text-red-600 hover:scale-120 duration-300' />
             </div>
             <div className='flex flex-col'>
-                <Bubble.List ref={listRef} style={{ height: 300, width: 300 }} role={memoRole} items={items} />
+                <Bubble.List ref={listRef} style={{ height: 300, width: 300, overflowY: 'auto' }} role={memoRole} items={items} />
                 <form onSubmit={handleSubmit(submitSend)}>
                     <Controller
                         name="message"

@@ -71,7 +71,7 @@ const ViewMessageSingle = ({ conversationId, setViewMessage }: any) => {
         () => ({
             ai: {
                 typing: true,
-                header: `dsfas`,
+                header: `sender`,
                 avatar: () => <Avatar icon={<AiOutlineAntDesign />} />,
                 footer: (content) => <Actions items={actionItems} onClick={() => console.log(content)} />,
             },
@@ -104,43 +104,6 @@ const ViewMessageSingle = ({ conversationId, setViewMessage }: any) => {
             message: ''
         }
     })
-
-    // Initial messages (optional)
-    useEffect(() => {
-        if (!conversationId) return;
-
-        const loadMessages = async () => {
-            try {
-                console.log('Try to sdfa', conversationId)
-                const res = await chatSvc.getMessages(conversationId);
-                const bubbles = mapMessagesToBubbles(res.data.data);
-                set(bubbles);
-            } catch (err) {
-                message.error('Failed to load messages');
-            }
-        };
-
-        loadMessages();
-    }, [conversationId]);
-
-    useEffect(() => {
-        if (!conversationId) return;
-
-        socket.emit('join-room', conversationId);
-
-        socket.on('receive-message', (msg) => {
-            _add({
-                key: msg._id,
-                role: getRoleFromMessage(msg),
-                content: msg.text,
-            });
-        });
-
-        return () => {
-            socket.off('receive-message');
-        };
-    }, [conversationId]);
-
 
     const { message: antdMessage } = App.useApp();
 
@@ -183,6 +146,42 @@ const ViewMessageSingle = ({ conversationId, setViewMessage }: any) => {
         });
     };
 
+    // Initial messages (optional)
+    useEffect(() => {
+        if (!conversationId) return;
+
+        const loadMessages = async () => {
+            try {
+                const res = await chatSvc.getMessages(conversationId);
+                console.log(res.data.data)
+                const bubbles = mapMessagesToBubbles(res.data.data);
+                set(bubbles);
+            } catch (err) {
+                message.error('Failed to load messages');
+            }
+        };
+
+        loadMessages();
+    }, [conversationId]);
+
+    useEffect(() => {
+        if (!conversationId) return;
+
+        socket.emit('join-room', conversationId);
+
+        socket.on('receive-message', (msg) => {
+            _add({
+                key: msg._id,
+                role: getRoleFromMessage(msg),
+                content: msg.text,
+            });
+        });
+
+        return () => {
+            socket.off('receive-message');
+        };
+    }, [conversationId]);
+
     useEffect(() => {
         socket.on("disconnect", () => {
             message.info('Disconnected');
@@ -194,8 +193,9 @@ const ViewMessageSingle = ({ conversationId, setViewMessage }: any) => {
     }, []);
 
     return (
-        <div className='flex flex-col p-2 fixed bottom-10 right-10 z-90'>
+        <div className='flex flex-col p-2 fixed bottom-10 right-10 z-90 bg-gray-50 rounded-md'>
             <div className='flex justify-between bg-blue-700/70 p-2 rounded-md'>
+                <h1>Messages</h1>
                 <AiOutlineClose onClick={() => setViewMessage(false)} className='text-xl lg:text-2xl cursor-pointer hover:text-red-600 hover:scale-120 duration-300' />
             </div>
             <div className='flex flex-col'>

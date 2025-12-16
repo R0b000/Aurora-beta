@@ -31,6 +31,17 @@ io.on('connection', (socket) => {
 
         socket.emit('joined-room', conversationId)
     })
+
+    socket.on('send-message', (data) => {
+        const { conversationId, text, sender } = data;
+
+        // send message to everyone in this conversation
+        socket.to(conversationId).emit('receive-message', {
+            conversationId,
+            text,
+            sender,
+        });
+    });
 })
 
 httpServer.listen(PORT, URL, () => {

@@ -22,14 +22,11 @@ class ChatService {
 
     listMessage = async() => {
         const response = await axiosConfig.get('/chat/message/list')
-
-        console.log(response.data)
         return response
     }
 
     getMessages = async (id: string) => {
         const response = await axiosConfig.get(`/chat/message/${id}`)
-        console.log('Checking form servc', response.data)
         return response;
     }
 }

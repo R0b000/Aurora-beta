@@ -22,6 +22,6 @@ route.use("/", userPublicRouter);
 route.use("/payment", auth(userRoles.CUSTOMER), paymentRoute);
 
 //chat
-route.use('/chat', chatRouter)
+route.use('/chat', auth(), chatRouter)
 
 module.exports = route;

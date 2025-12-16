@@ -593,22 +593,25 @@ const ProductViewPage = () => {
                         </div>
                     )}
 
-                    {messageClick ? (
-                        <div className="fixed bottom-10 right-10 z-40 text-black font-semibold text-shadow-sm" >
-                            <div className="gap-2 flex items-center bg-gray-300 justify-center w-full text-sm lg:text-base p-2 rounded-md">
-                                <MessagePage setMessageClick={setMessageClick} productDetails={productDetails} />
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="fixed bottom-10 right-10 z-30 text-white font-semibold text-shadow-sm">
-                            <div
-                                className="flex gap-2 items-center bg-green-600 justify-center w-full text-sm lg:text-base p-2 rounded-md cursor-pointer hover:scale-110 duration-300 transition-all"
-                                onClick={handleMessageClick}
-                            >
-                                <AiOutlineMessage className="text-xl lg:text-2xl" />Seller
-                            </div>
-                        </div>
-                    )}
+                    {(!loggedInUser || loggedInUser.role === 'customer') &&
+                        (
+                            messageClick ? (
+                                <div className="fixed bottom-10 right-10 z-40 text-black font-semibold text-shadow-sm" >
+                                    <div className="gap-2 flex items-center bg-gray-300 justify-center w-full text-sm lg:text-base p-2 rounded-md">
+                                        <MessagePage setMessageClick={setMessageClick} productDetails={productDetails} />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="fixed bottom-10 right-10 z-30 text-white font-semibold text-shadow-sm">
+                                    <div
+                                        className="flex gap-2 items-center bg-green-600 justify-center w-full text-sm lg:text-base p-2 rounded-md cursor-pointer hover:scale-110 duration-300 transition-all"
+                                        onClick={handleMessageClick}
+                                    >
+                                        <AiOutlineMessage className="text-xl lg:text-2xl" />Seller
+                                    </div>
+                                </div>
+                            ))
+                    }
                 </div >
             }
         </>
