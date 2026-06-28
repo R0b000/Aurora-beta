@@ -42,14 +42,29 @@ N/
 | Decision | Choice | Reason |
 |----------|--------|--------|
 | DB access | Raw SQL + mysql2 pool + Repository pattern | Max control, no ORM, learning-friendly, reusable |
-| Server language | TypeScript | Type safety, matches frontend, enforces clean layers |
-| Frontend stack | React + Vite + Tailwind + Antd | Keep known stack, fix structure not libraries |
+| Server language | JavaScript (CommonJS) | Reuse existing codebase patterns |
+| Frontend stack | React + Vite + TypeScript | Keep known stack, fix structure not libraries |
 | Server data (client side) | TanStack Query + pagination | Caching, background refetch, instant pages |
-| Client state | Zustand | Replaces Context, simpler, selective re-renders |
-| Forms | react-hook-form + Zod | Reuse existing patterns, type-safe schemas |
+| Client state | React Context (existing) | Matches existing codebase |
+| Forms | react-hook-form + Yup | Reuse existing patterns |
 | Realtime | Socket.io | Chat + notifications (preserved) |
 | Payments | Khalti | Preserved |
 | Files/Email | Cloudinary + Nodemailer | Preserved |
+
+## 5.1 Backend (JavaScript) Structure
+
+```
+N/server/src/
+├── config/         # db.js, env.js
+├── repositories/     # user.repository.js, product.repository.js, etc.
+├── services/         # auth.service.js, cart.service.js
+├── controllers/      # auth.controller.js
+├── routes/           # auth.routes.js
+├── middleware/       # auth.middleware.js, validate.middleware.js
+├── validators/       # auth.validator.js (Zod)
+├── utils/            # token.js, password.js
+└── app.js, index.js
+```
 
 ## 6. Database Schema (Raw SQL → MySQL 8)
 
@@ -185,43 +200,24 @@ POST /cart/items
 
 ```
 client/src/
-├── components/        # ⭐ Reusable UI primitives (LEGO bricks)
-│   ├── ui/            # Button, Input, Select, Modal, Card, Spinner, Badge
-│   ├── form/          # FormField, FormInput, FormSelect (wraps react-hook-form)
-│   ├── table/         # DataTable (config-driven, pagination built-in)
-│   └── layout/        # Header, Sidebar, AdminLayout, CustomerLayout, SellerLayout
-├── features/          # Page modules (one folder per domain)
-│   ├── auth/          # LoginPage, RegisterPage, + auth slice
-│   ├── product/       # ProductViewPage, ProductCard
-│   ├── cart/          # CartPage
-│   ├── checkout/      # CheckoutPage
-│   └── admin/         # Admin pages grouped
-├── hooks/             # ⭐ Reusable React Query hooks (data layer)
-│   ├── useProducts.ts     # useProducts(), useProduct(), useCreateProduct()
-│   ├── useCart.ts
-│   └── ...
-├── services/          # Thin axios wrappers (api calls only, no logic)
-│   └── api/
-│       ├── client.ts      # configured axios instance + interceptors
-│       ├── auth.api.ts
-│       ├── product.api.ts
-│       └── ...
-├── stores/            # Client state: auth user, cart count, theme
-│   ├── authStore.ts       # zustand store (replaces AppContext)
-│   └── cartStore.ts
-├── types/             # TS types mirroring backend
-├── lib/               # utils (formatCurrency, formatDate, cn)
-├── routes/            # Router config + route guards (RoleGuard)
-├── App.tsx
+├── component/         # Reusable UI (FormField.tsx)
+├── hooks/             # useApiSubmit.ts
+├── service/           # API calls (auth.service.ts, seller.service.ts)
+├── module/            # Pages by feature
+│   ├── AuthPage/      # LoginPage, RegisterPage
+│   ├── Seller/        # Seller pages
+│   ├── Admin/         # Admin pages
+│   ├── Customer/      # Customer pages
+│   ├── ProductPage/   # Product view
+│   ├── HomePage/      # Home page
+│   └── SearchPage/    # Search
+├── context/           # AppContext (user state)
+├── config/            # AxiosConfig, RouterConfig
 └── main.tsx
 ```
 
-### 8.1 Reusable Layers
-1. **`components/ui/`** — generic primitives (`<Button variant="primary">`) used everywhere; replaces bespoke per-page buttons/inputs.
-2. **`hooks/`** — React Query hooks. `useProducts()` gives caching, loading, error states for free. No duplicated `useEffect + axios` blocks.
-3. **`services/api/`** — thin axios wrappers. `productApi.getById(id)` is the ONLY place that knows the product URL.
-4. **`stores/`** — Zustand for client state (auth, cart count, UI state). Replaces React Context, avoids re-render storms.
-5. **`features/`** — page logic grouped by domain, importing from the layers above.
+### 8.1 Reusable Components
+- **FormField.tsx** - Reusable form inputs (FormInput, FormNumber, FormSelect, FormTextarea, ImageUpload)
 
 ### 8.2 Reusability Example
 "Show a product card" currently rewritten on home, search, cart, seller page, admin. New way: `<ProductCard product={p} />` everywhere.
@@ -278,3 +274,137 @@ client/src/
 - New visual design (separate pass after structure is solid).
 - Additional features beyond current scope.
 - Production hardening (rate limiting tuning, observability, CI/CD).
+
+## 14. API Endpoint Reference
+
+### Auth
+| Method | Endpoint | Auth | Body | Description |
+|--------|----------|------|------|-------------|
+| POST | `/api/auth/register` | ❌ | name, email, password, phone? | Register new user (returns tokens) |
+| POST | `/api/auth/login` | ❌ | email, password | Login + issue tokens |
+| POST | `/api/auth/refresh` | ❌ | refreshToken | Refresh access token |
+| POST | `/api/auth/logout` | ❌ | refreshToken? | Revoke session |
+| GET | `/api/auth/me` | ✅ | - | Current user profile |
+
+### Products (Public)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/products` | ❌ | List products (paginated, filterable) |
+| GET | `/api/products/:slug` | ❌ | Single product by slug |
+
+### Products (Seller)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/seller/products` | ✅ seller | My products |
+| POST | `/api/seller/products` | ✅ seller | Create product |
+| PUT | `/api/seller/products/:id` | ✅ seller | Update product |
+| DELETE | `/api/seller/products/:id` | ✅ seller | Delete product |
+
+### Cart
+| Method | Endpoint | Auth | Body | Description |
+|--------|----------|------|------|-------------|
+| GET | `/api/cart` | ✅ customer | - | Get active cart |
+| POST | `/api/cart/items` | ✅ customer | productId, quantity | Add item to cart |
+| PUT | `/api/cart/items/:id` | ✅ customer | quantity | Update quantity |
+| DELETE | `/api/cart/items/:id` | ✅ customer | - | Remove item |
+
+### Checkout
+| Method | Endpoint | Auth | Body | Description |
+|--------|----------|------|------|-------------|
+| POST | `/api/orders` | ✅ customer | address, couponId? | Create order from cart |
+| GET | `/api/orders` | ✅ customer | - | My orders |
+| GET | `/api/orders/:id` | ✅ customer | - | Order details |
+
+### Admin
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/admin/dashboard` | ✅ admin | Stats |
+| CRUD | `/api/admin/categories` | ✅ admin | Category management |
+| CRUD | `/api/admin/banners` | ✅ admin | Banner management |
+| CRUD | `/api/admin/coupons` | ✅ admin | Coupon management |
+| GET | `/api/admin/users` | ✅ admin | List users |
+| PATCH | `/api/admin/users/:id/ban` | ✅ admin | Ban/unban user |
+
+### Chat (Socket.io)
+| Event | Auth | Payload | Description |
+|-------|------|---------|-------------|
+| `join` | ✅ | { role } | Join room by role |
+| `message` | ✅ | { conversationId, content } | Send message |
+| `typing` | ✅ | { conversationId } | Typing indicator |
+
+## 15. Testing Strategy
+
+| Layer | Framework | Location |
+|-------|-----------|----------|
+| Unit | Jest | `server/tests/unit/` |
+| Integration | Jest | `server/tests/integration/` |
+| E2E | Playwright | `client/tests/e2e/` |
+
+- Repositories: Test SQL queries against test DB
+- Services: Mock repositories, test logic
+- Controllers: Mock services, test HTTP layer
+
+## 16. Seed Data Reference
+
+```sql
+-- Admin login: admin@n.test / Admin@123
+-- Categories: Electronics, Fashion, Home
+-- Banners: 2 welcome banners
+-- Password hash: bcrypt cost 10
+```
+
+## 17. TypeScript Type Mapping
+
+Each repository exports a `Row` type matching its table:
+- `UserRow` → users table
+- `ProductRow` → products table
+- `CartRow` → cart table (no password_hash)
+- `OrderRow` → orders table
+
+Types in `server/src/types/` are mirrored in `client/src/types/` for API contracts.
+
+## 18. Linting & Formatting
+
+```json
+// package.json scripts
+"lint": "eslint src --ext .ts",
+"format": "prettier --write \"src/**/*.ts\"",
+"typecheck": "tsc --noEmit"
+```
+
+## 19. Implementation Tracking
+
+### Server - Completed Modules
+- [x] Auth module (register, login, refresh, logout, me)
+- [x] Database pool with query helpers
+- [x] Error handling middleware
+- [x] Zod validators for auth
+- [x] Repository pattern (user, session, category, product, cart, order, banner)
+- [x] App entry point
+
+### Server - Remaining Modules
+- [ ] Product service + controller
+- [ ] Category routes
+- [ ] Cart routes
+- [ ] Order routes
+- [ ] Seller profile routes
+- [ ] Socket.io integration
+- [ ] Payment integration
+
+### Client - Copied from Existing
+- [x] All existing pages copied to N/client/src
+- [x] Updated auth service to match MySQL API response format
+- [x] AxiosConfig updated for /api prefix
+- [x] Reusable FormField component created
+- [x] API service layer added (api.ts)
+- [x] useApiSubmit hook created
+
+## 20. Migration Notes
+
+| MongoDB Feature | MySQL Equivalent | Notes |
+|-----------------|-----------------|-------|
+| Mongoose models | Repository pattern (ES modules) | One `.js` per table |
+| Embedded docs | Separate tables | `user.addresses` → `user_addresses` |
+| MongoDB `_id` | MySQL `id` BIGINT | Auto-increment vs ObjectId |
+| Session model | sessions table | Refresh tokens hashed |
+| Virtual populate | JOIN queries | Resolved at SQL level |

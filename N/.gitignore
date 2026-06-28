@@ -1,23 +1,69 @@
-# dependencies
-node_modules/
-
-# build output
-dist/
-build/
-
-# env
 .env
 .env.local
-*.local
+.env.*.local
 
-# logs
+# Log files
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# editor / OS
+# Diagnostic reports
+report.[now]*.js
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Directory for instrumented libs
+lib-cov
+
+# Coverage directory
+coverage
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage
+.grunt
+
+# Bower storage
+.bower_components
+
+# node-waf temporary files
+.lock-wscript
+
+# Compiled binary addons
+node-modules-wapm
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of parcel builds
+dist
+
+# Output of nuxt generate
+.nuxt
+
+# Vite
+.vite
+
+# Lambda functions
+.serverless
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
 .DS_Store
-.vscode/
-.idea/
-
-# misc
-*.tsbuildinfo
+Thumbs.db
