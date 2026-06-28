@@ -1,5 +1,5 @@
 import { Actions, Bubble, Sender, type BubbleItemType, type BubbleListProps } from '@ant-design/x';
-import { App, Avatar, message as antdMessage, type GetRef } from 'antd';
+import { Avatar, message as antdMessage, type GetRef } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { AiOutlineAntDesign, AiOutlineCheck, AiOutlineClose, AiOutlineCopy, AiOutlineEdit, AiOutlineRedo, AiOutlineUser } from 'react-icons/ai';
 import type { ProductMessageProps } from '../ProductPage/ProductViewPage';

@@ -6,9 +6,11 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useNavigate } from 'react-router-dom';
 import authSvc from '../../service/auth.service';
 import { ImSpinner9 } from 'react-icons/im';
+import {useAppContext} from "../../context/AppContext.tsx";
 
 const LoginPage = () => {
     const navigate = useNavigate()
+    const {setLoggedInUser} = useAppContext();
 
     const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<authLoginprops>({
         defaultValues: {
@@ -20,7 +22,9 @@ const LoginPage = () => {
 
     const submitForm = async (data: authLoginprops) => {
         try {
-            await authSvc.loginUser(data);
+            const result = await authSvc.loginUser(data);
+            console.log(result);
+            setLoggedInUser(result);
             navigate('/')
         } catch (error) {
             throw error
