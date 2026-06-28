@@ -1,93 +1,152 @@
-import { AiOutlineHome, AiOutlineUser } from "react-icons/ai"
-import Logo from '../../../assets/mobile_logo.png'
-import { FaRegCircleUser } from "react-icons/fa6"
-import { Outlet, useNavigate } from "react-router-dom"
+import { AiOutlineHome, AiOutlineUser, AiOutlineLogout, AiOutlineShopping } from "react-icons/ai"
+import { Outlet, useNavigate, useLocation } from "react-router-dom"
 import { useEffect, useState } from "react";
 import { useAppContext } from "../../../context/AppContext";
+import { MdCategory } from "react-icons/md";
 
 const SellerLayoutPage = () => {
     const navigate = useNavigate();
-    const [viewUser, setViewUser] = useState<boolean>(false)
-    const [vh, setVh] = useState<number>()
-    const [_vw, setVw] = useState<number>()
-    const {loggedInUser, setLoggedInUser} = useAppContext();
+    const location = useLocation();
+    const { loggedInUser, setLoggedInUser } = useAppContext();
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-    useEffect(() => {
-        setVw(() => window.innerWidth)
-        setVh(() => window.innerHeight)
-    }, [])
-
-    useEffect(() => {
-        if(loggedInUser?.role !== 'seller') {
-            navigate('/')
+    const isActive = (path: string) => {
+        if (path === '/seller') {
+            return location.pathname === '/seller' || location.pathname === '/seller/';
         }
-    }, [loggedInUser])
+        return location.pathname.includes(path);
+    };
+
+    const navItems = [
+        { path: '/seller', label: 'Dashboard', icon: AiOutlineHome },
+        { path: '/seller/product', label: 'Products', icon: AiOutlineShopping },
+        { path: '/seller/category/view', label: 'Categories', icon: MdCategory },
+    ];
+
+    useEffect(() => {
+        const saved = localStorage.getItem('sb_collapsed');
+        if (saved === '1') {
+            setSidebarCollapsed(true);
+        }
+        if (loggedInUser?.role !== 'seller') {
+            navigate('/');
+        }
+    }, [loggedInUser]);
+
+    const handleToggleSidebar = () => {
+        const newState = !sidebarCollapsed;
+        setSidebarCollapsed(newState);
+        localStorage.setItem('sb_collapsed', newState ? '1' : '0');
+    };
+
+    const handleLogout = () => {
+        localStorage.clear();
+        setLoggedInUser(null);
+        navigate('/');
+    };
 
     return (
-        <>
-            <div style={{ height: `${vh}px` }} className="flex flex-col p-2 w-full">
-                <div className="flex items-center justify-center">
-                    <div className="flex fixed top-2 left-1/2 -translate-x-1/2 w-[98%] h-[8vh] z-50 items-center justify-between gap-4 px-4 text-green-800 bg-black/20 rounded-xl">
-                        <AiOutlineHome onClick={() => navigate('/')} className="flex text-2xl cursor-pointer md:text-3xl" />
-                        <div className="flex h-[3vh] lg:w-[10vw] md:w-[20vw] w-[25vw]  items-center cursor-pointer justify-center" onClick={() => navigate('/seller')}>
-                            <img src={Logo} alt="" />
-                        </div>
-                        <FaRegCircleUser className="flex text-2xl cursor-pointer md:text-3xl" onClick={() => setViewUser(true)} />
-                    </div>
-                </div>
-                <div className="flex w-full h-[9vh] shrink-0"></div>
-                <div className="relative w-full h-full justify-center flex">
-                    {/* Outlet area (main content) */}
+        <div className="flex min-h-screen bg-slate-50">
+            {/* Sidebar */}
+            <aside
+                className={`
+                    fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200
+                    flex flex-col transition-all duration-200 ease-in-out
+                    ${sidebarCollapsed ? 'w-14' : 'w-56'}
+                `}
+            >
+                {/* Header */}
+                <div className="h-12 flex items-center px-3 border-b border-slate-200 gap-2">
                     <div
-                        className={`flex w-full h-full transition-opacity duration-300 ${viewUser ? 'pointer-events-none opacity-50' : 'pointer-events-auto opacity-100'
-                            }`}
+                        className="flex items-center justify-center w-7 h-7 bg-emerald-500 rounded-md cursor-pointer"
+                        onClick={() => navigate('/')}
                     >
-                        <Outlet />
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 2C8 2 4 5 4 9c0 3 1.5 5.5 4 7v2h8v-2c2.5-1.5 4-4 4-7 0-4-3.5-7-8-7z" />
+                        </svg>
                     </div>
-
-                    {/* Overlay for viewUser */}
-                    {viewUser && (
-                        <div
-                            className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 rounded-md p-2"
-                            onClick={() => setViewUser(false)}
-                        >
-                            {/* Stop click from closing when clicking inside the box */}
-                            <div
-                                className="bg-white text-black p-4 rounded-xl shadow-xl w-[400px]"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <div className="flex flex-col items-center justify-center">
-                                    <AiOutlineUser size={45} />
-                                    <h2 className="text-xl font-semibold mb-2 header-title">{loggedInUser?.name}</h2>
-                                    <h3 className="text-xl font-semibold mb-2 header-title">{loggedInUser?.email}</h3>
-                                </div>
-                                <div className="flex flex-col w-full gap-1 p-2">
-                                    <h3 className="flex w-full header-title text-xl">Logout</h3>
-                                    <div className="flex gap-5">
-                                        <button
-                                            onClick={() => {
-                                                navigate('/')
-                                                localStorage.clear();
-                                                setLoggedInUser(null)
-                                            }}
-                                            className="mt-3 bg-green-700 cursor-pointer text-white px-3 py-1 rounded-lg w-[50%] h-[5vh]">
-                                            YES
-                                        </button>
-                                        <button
-                                            onClick={() => setViewUser(false)}
-                                            className="mt-3 bg-green-700 cursor-pointer text-white px-3 py-1 rounded-lg w-[50%] h-[5vh]"
-                                        >
-                                            NO
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    {!sidebarCollapsed && (
+                        <span className="text-xs font-bold text-slate-800 truncate">
+                            Seller Panel
+                        </span>
                     )}
+                    <button
+                        onClick={handleToggleSidebar}
+                        className="ml-auto w-7 h-7 rounded-md border border-slate-200 bg-white text-slate-400 flex items-center justify-center hover:bg-slate-50 hover:text-slate-800 transition-colors"
+                    >
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
                 </div>
-            </div >
-        </>
-    )
-}
+
+                {/* Navigation */}
+                <nav className="flex-1 py-2 overflow-y-auto">
+                    {navItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                            <button
+                                key={item.path}
+                                onClick={() => navigate(item.path)}
+                                className={`
+                                    flex items-center gap-2.5 mx-1.5 px-2.5 py-1.5 rounded-md text-left transition-all
+                                    text-[11px] font-semibold
+                                    ${isActive(item.path)
+                                        ? 'bg-emerald-50 text-emerald-700'
+                                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                                    }
+                                `}
+                                style={{ opacity: sidebarCollapsed ? 0 : 1 }}
+                            >
+                                <Icon className={`text-[15px] flex-shrink-0 ${isActive(item.path) ? 'text-emerald-500' : 'text-slate-400'}`} />
+                                {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+                            </button>
+                        );
+                    })}
+                </nav>
+
+                {/* Footer - Logout */}
+                <div className="p-2 border-t border-slate-200">
+                    <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors text-[11px] font-semibold"
+                    >
+                        <AiOutlineLogout className="text-[15px]" />
+                        {!sidebarCollapsed && <span className="truncate">Logout</span>}
+                    </button>
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <main
+                className={`
+                    flex-1 transition-all duration-200
+                    ${sidebarCollapsed ? 'ml-14' : 'ml-56'}
+                `}
+            >
+                {/* Top Bar */}
+                <header className="h-12 flex items-center justify-between px-4 lg:px-6 border-b border-slate-200 bg-white sticky top-0 z-30">
+                    <h1 className="text-xs font-bold text-slate-800">
+                        Seller Dashboard
+                    </h1>
+                    <div className="flex items-center gap-2">
+                        <span className="hidden sm:block text-[11px] font-semibold text-slate-700 truncate max-w-32">
+                            {loggedInUser?.name}
+                        </span>
+                        <AiOutlineUser
+                            className="text-lg text-slate-500 cursor-pointer"
+                            onClick={() => navigate('/')}
+                        />
+                    </div>
+                </header>
+
+                {/* Content */}
+                <div className="p-4 lg:p-6">
+                    <Outlet />
+                </div>
+            </main>
+        </div>
+    );
+};
 
 export default SellerLayoutPage

@@ -13,14 +13,13 @@ import { FaUserCircle } from "react-icons/fa";
 import { ImSpinner9 } from "react-icons/im";
 import customerSvc from "../../service/customer.service";
 import CustomerAddToCartPage from "../Customer/CustomerAddToCartPage";
-import SearchPage from "../SearchPage/SearchPage";
 
 const MoreProductPage = () => {
     const [listProduct, setListProduct] = useState<ProductResponse | null>(null)
     const [cartProductIds, setCartProductIds] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [page, setPage] = useState<number>(1)
-    const { menuClick, loggedInUser, setMenuClick, setLoggedInUser, searchValue } = useAppContext();
+    const { menuClick, loggedInUser, setMenuClick, setLoggedInUser } = useAppContext();
     const [viewUser, setViewUser] = useState<boolean>(false)
     const [yesLoading, setYesLoading] = useState(false);
     const [noLoading, setNoLoading] = useState(false);
@@ -142,17 +141,14 @@ const MoreProductPage = () => {
                         </div>
                     }
                     <div className={`${menuClick ? "w-[80vw]" : 'w-full'} flex flex-col gap-2 h-full items-center justify-center p-2 mt-[12vw] lg:mt-[5vw]`}>
-                        <div className={`${searchValue ? 'flex visible transition-all duration-300 h-full w-full -mt-[13vw] lg:mt-[1vw] items-center justify-center' : "hidden"}`}>
-                            <SearchPage />
-                        </div>
                         <h2 className={`flex text-xl p-2 ${menuClick ? 'w-[80vw] px-13' : 'w-[90vw]'}`}>
                             More Product
                         </h2>
                         <div className="flex flex-col w-[90vw] items-center justify-center gap-2">
                             <div className={`flex flex-col gap-5 ${menuClick ? 'lg:w-[75vw] lg:items-center lg:justify-center' : 'w-full'}`}>
                                 <div className={`flex flex-col gap-2 items-center justify-center overflow-hidden md:grid md:grid-cols-3 ${menuClick ? 'lg:grid-cols-4' : 'lg:grid-cols-5 w-full'}`}>
-                                    {listProduct!.data.length > 0 ? (
-                                        listProduct?.data.map((item) => (
+                                    {listProduct && (listProduct.data?.length ?? 0) > 0 ? (
+                                        listProduct?.data!.map((item) => (
                                             <div key={item._id}
                                                 onClick={() => {
                                                     handleProductId(item._id)
@@ -203,10 +199,10 @@ const MoreProductPage = () => {
                                                 </div>
                                             </div>
                                         ))) : (
-                                        <div className='flex items-center justify-center w-screen'>
-                                            <Empty />
-                                        </div>
-                                    )}
+                                            <div className='flex items-center justify-center w-screen'>
+                                                <Empty />
+                                            </div>
+                                        )}
                                 </div>
                                 <div className='flex w-full'>
                                     <span className='flex border border-t grow border-gray-500/30'></span>
@@ -216,8 +212,8 @@ const MoreProductPage = () => {
                                 current={page}
                                 defaultCurrent={1}
                                 onChange={(page) => setPage(page)}
-                                pageSize={listProduct?.options.limit}
-                                total={listProduct?.options.total}
+                                pageSize={listProduct?.options?.limit || 10}
+                                total={listProduct?.options?.total || 0}
                             />
                         </div>
                     </div>

@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+body {
+  font-family: "Lato", sans-serif;
+  font-weight: 400;
+}
+
+h1,
+h2,
+.header-title {
+  font-family: "Oswald", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.custom-rate .ant-rate-star-zero {
+  color: rgb(156 163 175 / 1);
+}
+
+.custom-rate .ant-rate-star {
+  color: #d4af37;
+  /* base color for empty stars */
+  filter: brightness(100%);
+  /* decrease overall brightness */
+}
+
+/* Filled stars */
+.custom-rate .ant-rate-star-full {
+  color: #d4af37;
+  /* softer gold */
+  filter: brightness(100%);
+}
+
+/* Half stars (optional if you allow half ratings) */
+.custom-rate .ant-rate-star-half {
+  color: #d4af37;
+  filter: brightness(100%);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
