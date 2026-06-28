@@ -1,0 +1,23 @@
+-- Drops all tables for a clean reset. Use with caution.
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS messages;
+DROP TABLE IF EXISTS conversations;
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS banners;
+DROP TABLE IF EXISTS transactions;
+DROP TABLE IF EXISTS order_addresses;
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS cart_items;
+DROP TABLE IF EXISTS cart;
+DROP TABLE IF EXISTS favourites;
+DROP TABLE IF EXISTS product_reviews;
+DROP TABLE IF EXISTS product_images;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS coupons;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS user_addresses;
+DROP TABLE IF EXISTS seller_profiles;
+DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS users;
+SET FOREIGN_KEY_CHECKS = 1;
