@@ -1,50 +1,48 @@
-import { query } from '../config/db.js';
+import { executeStoredProcedure } from '../config/db-mssql.js';
 
+// Category operations
 export async function findAll() {
-  const rows = await query(
-    'SELECT * FROM categories WHERE is_active = 1 ORDER BY name ASC'
-  );
-  return rows;
+    const result = await executeStoredProcedure('usp_Category', { Flag: 'R', is_active: 1 });
+    return result.recordset;
 }
 
 export async function findBySlug(slug) {
-  const rows = await query(
-    'SELECT * FROM categories WHERE slug = ? LIMIT 1',
-    [slug]
-  );
-  return rows[0] || null;
+    const result = await executeStoredProcedure('usp_Category', { Flag: 'R', slug, is_active: 1 });
+    if (!result.recordset[0]) return null;
+    return { ...result.recordset[0], _id: result.recordset[0].id };
 }
 
 export async function findById(id) {
-  const rows = await query(
-    'SELECT * FROM categories WHERE id = ? LIMIT 1',
-    [id]
-  );
-  return rows[0] || null;
+    const result = await executeStoredProcedure('usp_Category', { Flag: 'R', id });
+    if (!result.recordset[0]) return null;
+    return { ...result.recordset[0], _id: result.recordset[0].id };
 }
 
 export async function create({ name, slug, description, image_url, parent_id }) {
-  const result = await query(
-    'INSERT INTO categories (name, slug, description, image_url, parent_id, is_active) VALUES (?, ?, ?, ?, ?, 1)',
-    [name, slug, description || null, image_url || null, parent_id || null]
-  );
-  return findById(result.insertId);
+    const result = await executeStoredProcedure('usp_Category', {
+        Flag: 'C',
+        name,
+        slug,
+        description: description || null,
+        image_url: image_url || null,
+        parent_id: parent_id || null
+    });
+    return findById(result.recordset[0].id);
 }
 
 export async function update(id, data) {
-  const fields = [];
-  const values = [];
-  for (const [key, value] of Object.entries(data)) {
-    fields.push(`${key} = ?`);
-    values.push(value);
-  }
-  values.push(id);
-  await query(
-    `UPDATE categories SET ${fields.join(', ')} WHERE id = ?`,
-    values
-  );
+    await executeStoredProcedure('usp_Category', {
+        Flag: 'U',
+        id,
+        name: data.name || null,
+        slug: data.slug || null,
+        description: data.description || null,
+        image_url: data.image_url || null,
+        parent_id: data.parent_id || null,
+        is_active: data.is_active !== undefined ? (data.is_active ? 1 : 0) : null
+    });
 }
 
 export async function remove(id) {
-  await query('DELETE FROM categories WHERE id = ?', [id]);
+    await executeStoredProcedure('usp_Category', { Flag: 'D', id });
 }

@@ -1,0 +1,15 @@
+-- To run this file manually:
+-- 1. Open SQL Server Management Studio (SSMS)
+-- 2. Connect to: db51809.databaseasp.net, port 1433
+-- 3. Authentication: SQL Server Authentication
+-- 4. Username: db51809
+-- 5. Password: db51809 (from .env)
+-- 6. Database: db51809
+-- 7. Open a new query window and paste this file contents
+-- 8. Execute (F5)
+
+-- Alternatively use sqlcmd from command line:
+-- sqlcmd -S tcp:db51809.databaseasp.net,1433 -U db51809 -P db51809 -d db51809 -i "N/database/ssms/schema/00-complete-setup.sql"
+
+-- Or use PowerShell SqlServer module:
+-- Invoke-Sqlcmd -ServerInstance "db51809.databaseasp.net,1433" -Username "db51809" -Password "db51809" -Database "db51809" -InputFile "N/database/ssms/schema/00-complete-setup.sql"

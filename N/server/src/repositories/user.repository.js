@@ -1,35 +1,32 @@
-import { query } from '../config/db.js';
+import { executeStoredProcedure } from '../config/db-mssql.js';
 
+// User operations
 export async function findByEmail(email) {
-  const rows = await query(
-    'SELECT * FROM users WHERE email = ? LIMIT 1',
-    [email.toLowerCase()]
-  );
-  if (!rows[0]) return null;
-  return { ...rows[0], _id: rows[0].id };
+    const result = await executeStoredProcedure('usp_User', { Flag: 'R', email: email.toLowerCase() });
+    if (!result.recordset[0]) return null;
+    return { ...result.recordset[0], _id: result.recordset[0].id };
 }
 
 export async function findById(id) {
-  const rows = await query(
-    'SELECT id, name, email, role, phone, avatar_url, is_verified, is_banned, created_at, updated_at FROM users WHERE id = ? LIMIT 1',
-    [id]
-  );
-  if (!rows[0]) return null;
-  return { ...rows[0], _id: rows[0].id };
-}
-
-export async function create({ name, email, passwordHash, role = 'customer', phone }) {
-  const result = await query(
-    'INSERT INTO users (name, email, password_hash, role, phone, is_verified) VALUES (?, ?, ?, ?, ?, 1)',
-    [name, email.toLowerCase(), passwordHash, role, phone || null]
-  );
-  return findById(result.insertId);
+    const result = await executeStoredProcedure('usp_User', { Flag: 'R', id });
+    if (!result.recordset[0]) return null;
+    return { ...result.recordset[0], _id: result.recordset[0].id };
 }
 
 export async function existsByEmail(email) {
-  const rows = await query(
-    'SELECT 1 FROM users WHERE email = ? LIMIT 1',
-    [email.toLowerCase()]
-  );
-  return rows.length > 0;
+    const result = await executeStoredProcedure('usp_User', { Flag: 'E', email: email.toLowerCase() });
+    return result.recordset[0].exists_count > 0;
+}
+
+export async function create({ name, email, passwordHash, role = 'customer', phone }) {
+    const result = await executeStoredProcedure('usp_User', {
+        Flag: 'C',
+        name,
+        email: email.toLowerCase(),
+        password_hash: passwordHash,
+        role,
+        phone: phone || null
+    });
+    if (!result.recordset[0]) return null;
+    return { ...result.recordset[0], _id: result.recordset[0].id };
 }

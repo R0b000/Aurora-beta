@@ -19,6 +19,7 @@
     "zod": "^3.23.8"
   },
   "description": "",
+  "devDependencies": {},
   "keywords": [],
   "author": "",
   "license": "ISC"

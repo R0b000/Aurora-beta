@@ -1,47 +1,39 @@
-import { query } from '../config/db.js';
+import { executeStoredProcedure } from '../config/db-mssql.js';
 
+// Banner operations
 export async function findActive() {
-  const rows = await query(
-    `SELECT * FROM banners
-     WHERE is_active = 1
-       AND (start_at IS NULL OR start_at <= UTC_TIMESTAMP())
-       AND (end_at IS NULL OR end_at >= UTC_TIMESTAMP())
-     ORDER BY sort_order ASC, created_at DESC`
-  );
-  return rows;
+    const result = await executeStoredProcedure('usp_Banner', { Flag: 'R' });
+    return result.recordset;
 }
 
 export async function findAll() {
-  const rows = await query(
-    'SELECT * FROM banners ORDER BY sort_order ASC'
-  );
-  return rows;
+    const result = await executeStoredProcedure('usp_Banner', { Flag: 'R' });
+    return result.recordset;
 }
 
-export async function create({ title, image_url, link_url, position, sort_order, start_at, end_at }) {
-  const result = await query(
-    `INSERT INTO banners (title, image_url, link_url, position, sort_order, start_at, end_at, is_active)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
-    [title, image_url, link_url || null, position || 'home', sort_order || 0, start_at || null, end_at || null]
-  );
-  const rows = await query('SELECT * FROM banners WHERE id = ? LIMIT 1', [result.insertId]);
-  return rows[0];
+export async function create({ title, image_url, link_url, position, sort_order }) {
+    const result = await executeStoredProcedure('usp_Banner', {
+        Flag: 'C',
+        title,
+        image_url,
+        link_url: link_url || null,
+        sort_order: sort_order || 0
+    });
+    return { id: result.recordset[0].id, title, image_url, link_url, position };
 }
 
-export async function update(id, data) {
-  const fields = [];
-  const values = [];
-  for (const [key, value] of Object.entries(data)) {
-    fields.push(`${key} = ?`);
-    values.push(value);
-  }
-  values.push(id);
-  await query(
-    `UPDATE banners SET ${fields.join(', ')} WHERE id = ?`,
-    values
-  );
+export async function update(id, { title, image_url, link_url, isActive, priority }) {
+    await executeStoredProcedure('usp_Banner', {
+        Flag: 'U',
+        id,
+        title: title || null,
+        image_url: image_url || null,
+        link_url: link_url || null,
+        is_active: isActive !== undefined ? (isActive ? 1 : 0) : null,
+        sort_order: priority !== undefined ? priority : null
+    });
 }
 
 export async function remove(id) {
-  await query('DELETE FROM banners WHERE id = ?', [id]);
+    await executeStoredProcedure('usp_Banner', { Flag: 'D', id });
 }
