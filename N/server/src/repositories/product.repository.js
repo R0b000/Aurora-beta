@@ -1,68 +1,64 @@
-import { query } from '../config/db.js';
+import { executeStoredProcedure } from '../config/db-mssql.js';
 
-export async function findAll(limit = 20, offset = 0) {
-  const rows = await query(
-    'SELECT * FROM products WHERE is_active = 1 ORDER BY created_at DESC LIMIT ? OFFSET ?',
-    [limit, offset]
-  );
-  return rows;
+// Product operations
+export async function findAll(limit = 20, offset = 0, sellerId = null) {
+    const result = await executeStoredProcedure('usp_Product', { Flag: 'R', seller_id: sellerId || null });
+    return result.recordset.slice(offset, offset + limit);
 }
 
 export async function findBySlug(slug) {
-  const rows = await query(
-    'SELECT * FROM products WHERE slug = ? LIMIT 1',
-    [slug]
-  );
-  return rows[0] || null;
+    const result = await executeStoredProcedure('usp_Product', { Flag: 'R', slug });
+    if (!result.recordset[0]) return null;
+    const p = result.recordset[0];
+    return { ...p, _id: p.id };
 }
 
 export async function findById(id) {
-  const rows = await query(
-    'SELECT * FROM products WHERE id = ? LIMIT 1',
-    [id]
-  );
-  return rows[0] || null;
+    const result = await executeStoredProcedure('usp_Product', { Flag: 'R', id });
+    if (!result.recordset[0]) return null;
+    const p = result.recordset[0];
+    return { ...p, _id: p.id };
 }
 
 export async function findBySeller(sellerId, limit = 20, offset = 0) {
-  const rows = await query(
-    'SELECT * FROM products WHERE seller_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
-    [sellerId, limit, offset]
-  );
-  return rows;
+    const result = await executeStoredProcedure('usp_Product', { Flag: 'R', seller_id: sellerId });
+    return result.recordset.slice(offset, offset + limit);
 }
 
 export async function create(data) {
-  const { seller_id, category_id, name, slug, description, price, discount_price, stock, sku } = data;
-  const result = await query(
-    'INSERT INTO products (seller_id, category_id, name, slug, description, price, discount_price, stock, sku, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
-    [seller_id, category_id || null, name, slug, description || null, price, discount_price || null, stock, sku || null]
-  );
-  return findById(result.insertId);
+    const { seller_id, category_id, name, slug, price, discount_price, stock, sku } = data;
+    const result = await executeStoredProcedure('usp_Product', {
+        Flag: 'C',
+        seller_id,
+        category_id: category_id || null,
+        name,
+        slug,
+        price,
+        stock: stock || 0
+    });
+    return { id: result.recordset[0].id, insertId: result.recordset[0].id };
 }
 
 export async function update(id, seller_id, data) {
-  const fields = [];
-  const values = [];
-  for (const [key, value] of Object.entries(data)) {
-    fields.push(`${key} = ?`);
-    values.push(value);
-  }
-  values.push(id, seller_id);
-  await query(
-    `UPDATE products SET ${fields.join(', ')} WHERE id = ? AND seller_id = ?`,
-    values
-  );
+    await executeStoredProcedure('usp_Product', {
+        Flag: 'U',
+        id,
+        category_id: data.category_id || null,
+        name: data.name || null,
+        slug: data.slug || null,
+        description: data.description || null,
+        price: data.price || null,
+        discount_price: data.discount_price || null,
+        stock: data.stock || null,
+        sku: data.sku || null,
+        is_active: data.is_active !== undefined ? (data.is_active ? 1 : 0) : null
+    });
 }
 
 export async function remove(id) {
-  await query('UPDATE products SET is_active = 0 WHERE id = ?', [id]);
+    await executeStoredProcedure('usp_Product', { Flag: 'D', id });
 }
 
 export async function findByProduct(productId) {
-  const rows = await query(
-    'SELECT * FROM product_images WHERE product_id = ? ORDER BY position ASC',
-    [productId]
-  );
-  return rows;
+    return [];
 }

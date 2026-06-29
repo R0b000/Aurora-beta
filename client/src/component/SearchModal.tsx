@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Input, Empty } from "antd";
 import { FaTimes, FaSearch } from "react-icons/fa";
-import { useAppContext } from "../../context/AppContext";
-import publicSvc from "../../service/public.service";
+import { useAppContext } from "../context/AppContext";
+import publicSvc from "../service/public.service";
 import type { ListProductDetails } from "../HomePage/homepage.validation";
 
 const SearchModal = () => {
