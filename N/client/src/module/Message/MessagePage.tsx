@@ -3,10 +3,10 @@ import { Avatar, message as antdMessage, type GetRef } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { AiOutlineAntDesign, AiOutlineCheck, AiOutlineClose, AiOutlineCopy, AiOutlineEdit, AiOutlineRedo, AiOutlineUser } from 'react-icons/ai';
 import type { ProductMessageProps } from '../ProductPage/ProductViewPage';
-import { io } from 'socket.io-client'
 import chatSvc from '../../service/chat.service';
 import { Controller, useForm } from 'react-hook-form';
 import { useAppContext } from '../../context/AppContext';
+import { useSocketContext } from '../../context/SocketContext';
 
 const actionItems = [
     {
@@ -43,13 +43,9 @@ const MessagePage = ({ setMessageClick, productDetails }: ProductMessageProps) =
     const [loading, setLoading] = useState<boolean>(false);
     const [items, set, _add, update] = useBubbleList([]);
     const listRef = React.useRef<GetRef<typeof Bubble.List>>(null);
-    const [connected, setConnected] = useState<boolean>(false)
     const { loggedInUser } = useAppContext();
+    const { joinRoom, sendMessage, onReceiveMessage, markNotificationRead, socket } = useSocketContext();
     const [conversationId, setConversationId] = useState<string>();
-
-    const socket = React.useMemo(() =>
-        io('http://localhost:8001')
-        , [])
 
     const memoRole: BubbleListProps['role'] = React.useMemo(
         () => ({
@@ -125,13 +121,8 @@ const MessagePage = ({ setMessageClick, productDetails }: ProductMessageProps) =
 
             let conversationId = response.data.data._id
 
-            socket.emit('join-room', (conversationId))
-
-            socket.on('joined-room', (conversationId) => {
-                antdMessage.info(`Connected!`);
-                setConnected(true)
-                setConversationId(conversationId)
-            })
+            joinRoom(conversationId)
+            setConversationId(conversationId)
 
             const roomMessages = await chatSvc.getMessages(conversationId)
             const bubbles = mapMessagesToBubbles(roomMessages.data.data)
@@ -142,7 +133,7 @@ const MessagePage = ({ setMessageClick, productDetails }: ProductMessageProps) =
     }
 
     const submitSend = async (data: { message: string }) => {
-        if (!connected) {
+        if (!conversationId) {
             antdMessage.warning('Connecting...')
         }
         setLoading(true)
@@ -164,15 +155,7 @@ const MessagePage = ({ setMessageClick, productDetails }: ProductMessageProps) =
 
         setValue('');
 
-        if(loggedInUser) {
-            await chatSvc.createMessage(loggedInUser?._id, conversationId, {message: text})
-        }
-
-        socket.emit('send-message', {
-            conversationId, 
-            text, 
-            sender: loggedInUser?._id
-        })
+        sendMessage(conversationId, text, loggedInUser?._id)
     }
 
     useEffect(() => {
@@ -182,7 +165,7 @@ const MessagePage = ({ setMessageClick, productDetails }: ProductMessageProps) =
     useEffect(() => {
         if(!conversationId) return; 
 
-        socket.on('receive-message', (msg) => {
+        onReceiveMessage((msg) => {
             _add({
                 key: msg._id,
                 role: getRoleFromMessage(msg),
@@ -191,19 +174,21 @@ const MessagePage = ({ setMessageClick, productDetails }: ProductMessageProps) =
         })
 
         return () => {
-            socket.off('receive-message');
+            // cleanup handled by hook
         };
     }, [conversationId])
 
     useEffect(() => {
-        socket.on("disconnect", () => {
+        const handleDisconnect = () => {
             antdMessage.info('Disconnected');
-        });
+        };
+        
+        socket?.on('disconnect', handleDisconnect);
 
         return () => {
-            socket.off("disconnect");
+            socket?.off('disconnect', handleDisconnect);
         };
-    }, []);
+    }, [socket]);
 
     return (
         <div className='flex flex-col p-2 w-full'>

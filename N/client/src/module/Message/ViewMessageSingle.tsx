@@ -2,10 +2,10 @@ import { Actions, Bubble, Sender, type BubbleItemType, type BubbleListProps } fr
 import { App, Avatar, message, type GetRef } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { AiOutlineAntDesign, AiOutlineCheck, AiOutlineClose, AiOutlineCopy, AiOutlineEdit, AiOutlineRedo, AiOutlineUser } from 'react-icons/ai';
-import { io } from 'socket.io-client'
 import chatSvc from '../../service/chat.service';
 import { Controller, useForm } from 'react-hook-form';
 import { useAppContext } from '../../context/AppContext';
+import { useSocketContext } from '../../context/SocketContext';
 
 const actionItems = [
     {
@@ -43,11 +43,7 @@ const ViewMessageSingle = ({ conversationId, setViewMessage }: any) => {
     const [items, set, _add, update] = useBubbleList([]);
     const listRef = React.useRef<GetRef<typeof Bubble.List>>(null);
     const { loggedInUser } = useAppContext();
-
-    const socket = React.useMemo(
-        () => io('http://localhost:8001'),
-        []
-    );
+    const { socket, joinRoom, sendMessage, onReceiveMessage } = useSocketContext();
 
     const getRoleFromMessage = (msg: any) => {
         const senderId =
@@ -139,11 +135,7 @@ const ViewMessageSingle = ({ conversationId, setViewMessage }: any) => {
             );
         }
 
-        socket.emit('send-message', {
-            conversationId,
-            text,
-            sender: loggedInUser?._id,
-        });
+        sendMessage(conversationId, text, loggedInUser?._id);
     };
 
     // Initial messages (optional)
@@ -167,30 +159,28 @@ const ViewMessageSingle = ({ conversationId, setViewMessage }: any) => {
     useEffect(() => {
         if (!conversationId) return;
 
-        socket.emit('join-room', conversationId);
+        joinRoom(conversationId);
 
-        socket.on('receive-message', (msg) => {
+        onReceiveMessage((msg) => {
             _add({
                 key: msg._id,
                 role: getRoleFromMessage(msg),
                 content: msg.text,
             });
         });
-
-        return () => {
-            socket.off('receive-message');
-        };
-    }, [conversationId]);
+    }, [conversationId, joinRoom, onReceiveMessage]);
 
     useEffect(() => {
-        socket.on("disconnect", () => {
+        const handleDisconnect = () => {
             message.info('Disconnected');
-        });
+        };
+
+        socket?.on('disconnect', handleDisconnect);
 
         return () => {
-            socket.off("disconnect");
+            socket?.off('disconnect', handleDisconnect);
         };
-    }, []);
+    }, [socket]);
 
     return (
         <div className='flex flex-col p-2 fixed bottom-10 right-10 z-90 bg-gray-50 rounded-md'>
