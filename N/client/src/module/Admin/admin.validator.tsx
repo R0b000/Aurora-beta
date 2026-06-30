@@ -12,7 +12,6 @@ export interface createCategoryProps {
 
 export const categoryValidationDTO = yup.object().shape({
     name: yup.string().required('Category name is required.'),
-    image: yup.string().nullable()
 })
 
 export const BannerType = {

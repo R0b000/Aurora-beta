@@ -92,7 +92,7 @@ const SellerProductCreatePage = ({ setAddClick, categoryList }: sellerPageProps)
                 })
             }
 
-            await sellerSvc.createCategory(formData);
+            await sellerSvc.createProduct(formData);
             reset();
             setAddClick(false)
         } catch (err) {

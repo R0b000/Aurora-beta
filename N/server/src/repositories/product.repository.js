@@ -3,7 +3,7 @@ import { executeStoredProcedure } from '../config/db-mssql.js';
 // Product operations
 export async function findAll(limit = 20, offset = 0, sellerId = null) {
     const result = await executeStoredProcedure('usp_Product', { Flag: 'R', seller_id: sellerId || null });
-    return result.recordset.slice(offset, offset + limit);
+    return result.recordset.slice(offset, offset + limit).map(p => ({ ...p, _id: p.id }));
 }
 
 export async function findBySlug(slug) {
@@ -22,7 +22,7 @@ export async function findById(id) {
 
 export async function findBySeller(sellerId, limit = 20, offset = 0) {
     const result = await executeStoredProcedure('usp_Product', { Flag: 'R', seller_id: sellerId });
-    return result.recordset.slice(offset, offset + limit);
+    return result.recordset.slice(offset, offset + limit).map(p => ({ ...p, _id: p.id }));
 }
 
 export async function create(data) {
@@ -36,7 +36,8 @@ export async function create(data) {
         price,
         stock: stock || 0
     });
-    return { id: result.recordset[0].id, insertId: result.recordset[0].id };
+    const id = result.recordset[0].id;
+    return { id, insertId: id, _id: id };
 }
 
 export async function update(id, seller_id, data) {

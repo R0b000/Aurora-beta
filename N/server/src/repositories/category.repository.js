@@ -3,7 +3,7 @@ import { executeStoredProcedure } from '../config/db-mssql.js';
 // Category operations
 export async function findAll() {
     const result = await executeStoredProcedure('usp_Category', { Flag: 'R', is_active: 1 });
-    return result.recordset;
+    return result.recordset.map(c => ({ ...c, _id: c.id }));
 }
 
 export async function findBySlug(slug) {

@@ -6,11 +6,8 @@ class CategoryService {
         try {
             let data = req.body;
 
-            if (!data.slug) {
-                data.slug = data.name.toLowerCase();
-            } else {
-                data.slug = data.slug.toLowerCase();
-            };
+            const timestamp = new Date().toISOString().replace(/[-:T.]/g, '-').slice(0, 19);
+            data.slug = data.name.toLowerCase().replace(/\s+/g, '-') + '-' + timestamp;
 
             if (req.file) {
                 data.image = await cloudinarySvc.uploadFile(req.file.path, '/Category')
@@ -26,7 +23,10 @@ class CategoryService {
         try {
             let data = req.body;
 
-            data.slug = data.name.toLowerCase();
+            if (data.name) {
+                const timestamp = new Date().toISOString().replace(/[-:T.]/g, '-').slice(0, 19);
+                data.slug = data.name.toLowerCase().replace(/\s+/g, '-') + '-' + timestamp;
+            }
 
             if (req.file) {
                 data.image = await cloudinarySvc.uploadFile(req.file.path, '/Category')
