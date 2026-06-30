@@ -37,11 +37,7 @@ class AdminService {
     }
 
     async createCategory(formData: any) {
-        const response = await axiosConfig.post('/admin/category', formData, {
-            headers: {
-                "Content-Type": 'multipart/form-data'
-            }
-        })
+        const response = await axiosConfig.post('/admin/category', formData)
         return response.data
     }
 

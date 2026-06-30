@@ -17,6 +17,7 @@ const ActivateAccount = lazy(() => import("../module/AuthPage/ActivateAccount"))
 const AdminLayoutPage = lazy(() => import("../module/Admin/Layout/AdminLayoutPages"))
 const AdminCategoryPage = lazy(() => import("../module/Admin/Category/AdminCategoryPage"))
 const AdminCategoryUpdatePage = lazy(() => import("../module/Admin/Category/AdminCategoryUpdatePage"))
+const AdminCategoryCreatePage = lazy(() => import("../module/Admin/Category/AdminCategoryCreatePage"))
 const AdminBannerPage = lazy(() => import("../module/Admin/Banner/AdminBannerPage"))
 const AdminBannerUpdatePage = lazy(() => import("../module/Admin/Banner/AdminBannerUpdatePage"))
 const AdminBannerCreatePage = lazy(() => import("../module/Admin/Banner/AdminBannerCreatePage"))
@@ -89,6 +90,7 @@ const router = createBrowserRouter([
                 path: 'category',
                 Component: AdminCategoryPage,
                 children: [
+                    { path: 'create', Component: AdminCategoryCreatePage },
                     { path: 'update/:id', Component: AdminCategoryUpdatePage }
                 ]
             },

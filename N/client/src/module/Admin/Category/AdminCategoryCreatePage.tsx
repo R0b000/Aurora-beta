@@ -7,7 +7,6 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import adminSvc from "../../../service/admin.service";
 import { ImSpinner9 } from "react-icons/im";
 import { useNavigate } from "react-router-dom";
-import type { AdminCategoryProps } from "./AdminCategoryPage";
 
 type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
 
@@ -20,7 +19,11 @@ const getBase64 = (file: FileType): Promise<string> =>
     }
     );
 
-const AdminCategoryCreatePage = ({ setAddClick }: AdminCategoryProps) => {
+interface AdminCategoryCreatePageProps {
+    setAddClick?: (value: boolean) => void;
+}
+
+const AdminCategoryCreatePage = ({ setAddClick }: AdminCategoryCreatePageProps) => {
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
     const navigate = useNavigate()
@@ -64,7 +67,7 @@ const AdminCategoryCreatePage = ({ setAddClick }: AdminCategoryProps) => {
 
             await adminSvc.createCategory(formData);
             reset();
-            setAddClick(false)
+            setAddClick?.(false)
             navigate('/admin/category')
         } catch (error) {
             console.log(error)
@@ -75,7 +78,7 @@ const AdminCategoryCreatePage = ({ setAddClick }: AdminCategoryProps) => {
     return (
         <>
             <p className="flex text-sm w-full md:text-base">
-                Create New Cateogry
+                Create New Category
             </p>
             <form onSubmit={handleSubmit(onSubmit)} className="flex w-full">
                 <div className="flex flex-col gap-10 w-full">

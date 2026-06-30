@@ -169,7 +169,7 @@ const AdminCategoryUpdatePage = () => {
                                 <div className="flex flex-col w-full gap-4">
                                     {!isSubmitting &&
                                         <button type="submit" className="flex w-full md:text-base md:h-[7vh] cursor-pointer bg-green-950 text-white header-title items-center justify-center rounded-md h-[6vh]">
-                                            UPDATE BANNER
+                                            UPDATE CATEGORY
                                         </button>
                                     }
                                     {isSubmitting &&

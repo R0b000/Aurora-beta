@@ -493,3 +493,74 @@ GO
 
 PRINT 'All procedures created!';
 GO
+
+-- ============================================================================
+-- SESSION PROCEDURES
+-- ============================================================================
+IF OBJECT_ID(N'[dbo].[sp_create_session]', N'P') IS NOT NULL DROP PROC [dbo].[sp_create_session];
+GO
+CREATE PROCEDURE [dbo].[sp_create_session]
+    @user_id BIGINT,
+    @refresh_token_hash NVARCHAR(255),
+    @ip NVARCHAR(45) = NULL,
+    @user_agent NVARCHAR(500) = NULL,
+    @expires_at DATETIME2
+WITH RECOMPILE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        INSERT INTO [dbo].[sessions] (user_id, refresh_token_hash, ip, user_agent, expires_at)
+        VALUES (@user_id, @refresh_token_hash, @ip, @user_agent, @expires_at);
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+IF OBJECT_ID(N'[dbo].[sp_find_active_session]', N'P') IS NOT NULL DROP PROC [dbo].[sp_find_active_session];
+GO
+CREATE PROCEDURE [dbo].[sp_find_active_session]
+    @refresh_token_hash NVARCHAR(255)
+WITH RECOMPILE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    BEGIN TRY
+        SELECT id, user_id, refresh_token_hash, ip, user_agent, expires_at, created_at
+        FROM [dbo].[sessions] WITH (NOLOCK)
+        WHERE refresh_token_hash = @refresh_token_hash
+          AND revoked_at IS NULL
+          AND expires_at > GETUTCDATE();
+    END TRY
+    BEGIN CATCH
+        THROW;
+    END CATCH
+END;
+GO
+
+IF OBJECT_ID(N'[dbo].[sp_revoke_session]', N'P') IS NOT NULL DROP PROC [dbo].[sp_revoke_session];
+GO
+CREATE PROCEDURE [dbo].[sp_revoke_session]
+    @refresh_token_hash NVARCHAR(255)
+WITH RECOMPILE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        UPDATE [dbo].[sessions]
+        SET revoked_at = GETUTCDATE()
+        WHERE refresh_token_hash = @refresh_token_hash;
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO

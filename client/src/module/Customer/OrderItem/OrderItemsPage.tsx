@@ -5,7 +5,7 @@ import { AiOutlineCar } from "react-icons/ai"
 import { Empty } from "antd"
 
 const CustomerOrderItemsPage = () => {
-    const [orderItemsDetails, setOrderItemsDetails] = useState<any>([])
+    const [orderItemsDetails, setOrderItemsDetails] = useState<any>({data: []})
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const navigate = useNavigate();
 
@@ -33,7 +33,7 @@ const CustomerOrderItemsPage = () => {
                             <h1>My Orders</h1>
                         </div>
                         <div className="flex flex-col p-3 gap-5 md:grid md:grid-cols-2 lg:grid-cols-4">
-                            {orderItemsDetails.data.length === 0 ? <Empty/> :                            
+                            {!orderItemsDetails?.data || orderItemsDetails.data.length === 0 ? <Empty/> :                            
                             orderItemsDetails?.data.map((items: any, index: number) => (
                                 <div key={index} onClick={() => {
                                     navigate(`cartView/${items.items.product._id}`)

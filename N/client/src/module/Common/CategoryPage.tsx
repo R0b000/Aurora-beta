@@ -108,12 +108,11 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ service = adminSvc }) => {
 
     const formFields = [
         { name: 'name', label: 'Category Name', placeholder: 'Enter category name', rules: [{ required: true, message: 'Please enter name' }] },
-        { name: 'slug', label: 'Slug', placeholder: 'Enter slug', rules: [{ required: true, message: 'Please enter slug' }] },
     ];
 
     const initialValues = editingItem
-        ? { name: editingItem.name, slug: editingItem.slug }
-        : { name: '', slug: '' };
+        ? { name: editingItem.name }
+        : { name: '' };
 
     return (
         <div className="flex flex-col gap-3">
