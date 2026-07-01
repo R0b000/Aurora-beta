@@ -1,0 +1,3 @@
+First of all fix the problem of the toast and how toast should be done here is toast is globally defined and then used it like a toastify you know we have made the compoonent as welll so this is gonna be easy so lets go bro here lets do that fast here
+
+First of all fix the problem of the toast and how toast should be done here is toast is globally defined and then used it like a toastify you know we have made the compoonent as welll so this is gonna be easy so lets go bro here lets do that fast here

@@ -1,21 +1,16 @@
 import * as categoryRepo from '../repositories/category.repository.js';
-import { uploadSingle } from '../middleware/upload.middleware.js';
+import { deleteFromCloudinary } from '../utils/image.util.js';
 
 export async function createCategory(req, res, next) {
     try {
-        let image_url = null;
-        if (req.file) {
-            image_url = `/uploads/${req.file.filename}`;
-        }
-
-        const name = req.body.name;
-        const slug = name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
+        const { name, description, image_url, public_id } = req.body;
 
         const category = await categoryRepo.create({
             name: name,
-            slug: slug,
-            description: req.body.description || null,
-            image_url: image_url,
+            slug: name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
+            description: description || null,
+            image_url: image_url || null,
+            public_id: public_id || null,
             parent_id: null
         });
 
@@ -27,6 +22,9 @@ export async function createCategory(req, res, next) {
             data: category
         });
     } catch (err) {
+        if (req.body.public_id) {
+            await deleteFromCloudinary(req.body.public_id).catch(() => {});
+        }
         next(err);
     }
 }
@@ -90,9 +88,16 @@ export async function updateCategory(req, res, next) {
             });
         }
 
-        let image_url = existing.image_url;
-        if (req.file) {
-            image_url = `/uploads/${req.file.filename}`;
+        let image_url = existing.image?.secure_url || null;
+        let newPublicId = req.body.public_id || null;
+
+        if (req.body.image_url) {
+            image_url = req.body.image_url;
+            newPublicId = req.body.public_id || null;
+
+            if (existing.image?.public_id && existing.image.public_id !== newPublicId) {
+                await deleteFromCloudinary(existing.image.public_id).catch(() => {});
+            }
         }
 
         let slug = existing.slug;
@@ -103,8 +108,9 @@ export async function updateCategory(req, res, next) {
         await categoryRepo.update(req.params.id, {
             name: req.body.name || existing.name,
             slug: slug,
-            description: req.body.description || existing.description,
-            image_url: image_url,
+            description: req.body.description ?? existing.description,
+            image_url,
+            public_id: newPublicId,
             parent_id: existing.parent_id,
             is_active: existing.is_active
         });
@@ -118,6 +124,9 @@ export async function updateCategory(req, res, next) {
             data: updated
         });
     } catch (err) {
+        if (req.body.public_id) {
+            await deleteFromCloudinary(req.body.public_id).catch(() => {});
+        }
         next(err);
     }
 }
@@ -132,6 +141,10 @@ export async function deleteCategory(req, res, next) {
                 status: 'Error id',
                 message: 'Category not found or already deleted'
             });
+        }
+
+        if (existing.image?.public_id) {
+            await deleteFromCloudinary(existing.image.public_id).catch(() => {});
         }
 
         await categoryRepo.remove(req.params.id);

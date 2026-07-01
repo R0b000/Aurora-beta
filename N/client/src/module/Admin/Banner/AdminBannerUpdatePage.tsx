@@ -1,6 +1,5 @@
-import { Image, Input, Select, DatePicker, Upload, type GetProp, type UploadFile, type UploadProps, InputNumber } from "antd";
+import { Input, Select, DatePicker, InputNumber } from "antd";
 import { useCallback, useEffect, useState } from "react";
-import { AiOutlinePlus } from "react-icons/ai";
 import { BannerType, BannerValidationDTO } from "../admin.validator";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -8,30 +7,18 @@ import { useNavigate, useParams } from "react-router-dom";
 import adminSvc from "../../../service/admin.service";
 import dayjs from 'dayjs'
 import { ImSpinner9 } from "react-icons/im";
-
-type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
-
-const getBase64 = (file: FileType): Promise<string> =>
-    new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = (error) => reject(error);
-    }
-    );
+import FileUpload from "../../../components/ui/FileUpload";
 
 const AdminBannerUpdatePage = () => {
-    const [previewOpen, setPreviewOpen] = useState(false);
-    const [previewImage, setPreviewImage] = useState('');
     const navigate = useNavigate()
     const { id } = useParams();
     const [isLoading, setIsLoading] = useState<boolean>(true)
+    const [uploadedFiles, setUploadedFiles] = useState<any[]>([])
 
     const { handleSubmit, control, formState: { errors, dirtyFields, isSubmitting }, setValue, getValues } = useForm({
         defaultValues: {
             title: '',
             type: BannerType.Homepage,
-            image: '',
             startAt: dayjs(),
             endAt: dayjs(),
             isActive: true,
@@ -45,19 +32,21 @@ const AdminBannerUpdatePage = () => {
             const bannerDetails = await adminSvc.bannerDetailsById(bannerId);
             setValue('title', bannerDetails.title)
             setValue('type', bannerDetails.type)
-            setValue('image', bannerDetails.image.secure_url)
             setValue('startAt', dayjs(bannerDetails.startAt))
             setValue('endAt', dayjs(bannerDetails.endAt))
             setValue('isActive', bannerDetails.isActive)
             setValue('priority', bannerDetails.priority)
-            setFileList([
-                {
-                    uid: '-1',
-                    name: bannerDetails.image.public_id,
+            if (bannerDetails.image?.secure_url) {
+                setUploadedFiles([{
+                    id: 'existing-banner',
+                    file: new File([], bannerDetails.image.public_id || 'banner-image'),
+                    preview: bannerDetails.image.secure_url,
+                    progress: 100,
                     status: 'done',
-                    url: bannerDetails.image.secure_url,
-                }
-            ])
+                    public_id: bannerDetails.image.public_id,
+                    secure_url: bannerDetails.image.secure_url,
+                }])
+            }
         } catch (error) {
             throw error
         } finally {
@@ -71,45 +60,25 @@ const AdminBannerUpdatePage = () => {
         }
     }, [id, fetchBannerDetails])
 
-    const [fileList, setFileList] = useState<UploadFile[]>([]);
-
-    const handlePreview = async (file: UploadFile) => {
-        if (!file.url && !file.preview) {
-            file.preview = await getBase64(file.originFileObj as FileType);
-        }
-
-        setPreviewImage(file.url || (file.preview as string));
-        setPreviewOpen(true);
-    };
-
-    const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) =>
-        setFileList(newFileList);
-
-    const uploadButton = (
-        <button style={{ border: 0, background: 'none' }} type="button">
-            <AiOutlinePlus />
-            <div style={{ marginTop: 8 }}>Upload</div>
-        </button>
-    );
-
     const onSubmit = async (bannerId: string | undefined) => {
         try {
             if (!bannerId) return;
 
-            let formData = new FormData()
+            const payload: any = {}
             const allValues = getValues();
 
-            Object.keys(dirtyFields).forEach((field) => {
-                if (field === 'image') return;
+            if (allValues.title) payload.title = allValues.title
+            if (allValues.type) payload.type = allValues.type
+            if (allValues.startAt) payload.startAt = dayjs(allValues.startAt).toISOString()
+            if (allValues.endAt) payload.endAt = dayjs(allValues.endAt).toISOString()
 
-                formData.append(field, (allValues as any)[field])
-            })
-
-            if (fileList[0]?.originFileObj) {
-                formData.append('image', fileList[0].originFileObj as File);
+            const latest = uploadedFiles[uploadedFiles.length - 1]
+            if (latest?.secure_url) {
+                payload.image_url = latest.secure_url
+                payload.public_id = latest.public_id
             }
 
-            await adminSvc.updateBannerById(formData, bannerId)
+            await adminSvc.updateBannerById(payload, bannerId)
             navigate('/admin/banner')
         } catch (error) {
             console.log(error)
@@ -122,7 +91,7 @@ const AdminBannerUpdatePage = () => {
             {!isLoading &&
                 <>
                     <p className="flex text-sm w-full md:text-base">
-                        Create New Banner
+                        Update Banner
                     </p>
                     <form onSubmit={handleSubmit(() => onSubmit(id))} className="flex w-full h-auto md:mt-3">
                         <div className="flex flex-col gap-5 w-full h-auto">
@@ -167,7 +136,7 @@ const AdminBannerUpdatePage = () => {
                                             render={({ field }) => (
                                                 <DatePicker
                                                     {...field}
-                                                    placeholder="Start Date"
+                                                    placeholder="End Date"
                                                     className="w-full h-[5vh]"
                                                 />
                                             )}
@@ -239,37 +208,18 @@ const AdminBannerUpdatePage = () => {
                                 </div>
                                 <div className='flex flex-col relative h-[13vh] lg:h-[16vh]'>
                                     <p className="text-sm md:text-base px-2">Banner Picture</p>
-                                    <Controller
-                                        name='image'
-                                        control={control}
-                                        render={({ field }) => (
-                                            <Upload
-                                                {...field}
-                                                listType="picture-card"
-                                                beforeUpload={() => false}
-                                                fileList={fileList}
-                                                onPreview={handlePreview}
-                                                onChange={handleChange}
-                                                className="bg-white rounded-xl justify-between items-center w-full"
-                                            >
-                                                {fileList.length >= 1 ? null : uploadButton}
-                                            </Upload>
-                                        )}
+                                    <FileUpload
+                                        accept="image/*"
+                                        multiple={false}
+                                        maxFiles={1}
+                                        maxSizeMB={5}
+                                        uploadUrl="/api/upload"
+                                        folder="Banner"
+                                        value={uploadedFiles}
+                                        onChange={setUploadedFiles}
+                                        label="Upload Banner Image"
+                                        helperText="Accepted: JPG, PNG, WEBP. Max 5MB."
                                     />
-                                    {previewImage && (
-                                        <Image
-                                            wrapperStyle={{ display: 'none' }}
-                                            preview={{
-                                                visible: previewOpen,
-                                                onVisibleChange: (visible) => setPreviewOpen(visible),
-                                                afterOpenChange: (visible) => !visible && setPreviewImage(''),
-                                            }}
-                                            src={previewImage}
-                                        />
-                                    )}
-                                    <div className='absolute bottom-2 left-1 text-red-500/90'>
-                                        {errors.image?.message}
-                                    </div>
                                 </div>
                             </div>
                             <div className="flex flex-col w-full gap-4">

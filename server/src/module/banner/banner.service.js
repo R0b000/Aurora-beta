@@ -1,5 +1,5 @@
 const { object } = require("joi");
-const cloudinarySvc = require("../../services/cloudinary.service");
+const { uploadImageToCloudinary } = require("../../utility/image.util");
 const BannerModel = require("./banner.model");
 
 class BannerService {
@@ -8,7 +8,7 @@ class BannerService {
             let data = req.body;
 
             if (req.file) {
-                data.image = await cloudinarySvc.uploadFile(req.file.path, '/Banner')
+                data.image = await uploadImageToCloudinary(req.file.path, 'Banner')
             } else {
                 data.image = ''
             }
@@ -41,7 +41,7 @@ class BannerService {
                 }
 
                 if (req.file) {
-                    data.image = await cloudinarySvc.uploadFile(req.file.path, '/Banner')
+                    data.image = await uploadImageToCloudinary(req.file.path, 'Banner')
                 } else {
                     data.image = oldData.image
                 }

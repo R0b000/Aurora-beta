@@ -7,6 +7,8 @@ export interface UploadedFile {
   progress: number
   status: 'uploading' | 'done' | 'error'
   error?: string
+  public_id?: string
+  secure_url?: string
 }
 
 export interface FileTypeBinding {
@@ -32,6 +34,8 @@ interface FileUploadProps {
   helperText?: string
   fileTypes?: FileTypeBinding[]
   enforceTypes?: boolean
+  uploadUrl?: string
+  folder?: string
 }
 
 const formatSize = (bytes: number) => {
@@ -55,6 +59,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
   helperText,
   fileTypes = [],
   enforceTypes = false,
+  uploadUrl,
+  folder,
 }) => {
   const [dragOver, setDragOver] = useState(false)
   const [internalFiles, setInternalFiles] = useState<UploadedFile[]>(value)
@@ -67,8 +73,43 @@ const FileUpload: React.FC<FileUploadProps> = ({
     return fileTypes.find((ft) => ft.extensions.includes(extension))
   }
 
+  const uploadToCloudinary = async (file: File): Promise<{ public_id: string; secure_url: string }> => {
+    if (!uploadUrl) {
+      throw new Error('Upload URL not configured')
+    }
+
+    const formData = new FormData()
+    formData.append('file', file)
+    if (folder) {
+      formData.append('folder', folder)
+    }
+
+    const authHeader: Record<string, string> = {}
+    if (typeof localStorage !== 'undefined') {
+      const token = localStorage.getItem('actualToken')
+      if (token) {
+        authHeader.Authorization = `Bearer ${token}`
+      }
+    }
+
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: authHeader,
+      body: formData,
+      credentials: 'include',
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || 'Upload failed')
+    }
+
+    const result = await response.json()
+    return result.data
+  }
+
   const processFiles = useCallback(
-    (rawFiles: FileList | File[]) => {
+    async (rawFiles: FileList | File[]) => {
       const files = Array.from(rawFiles)
       const validFiles: File[] = []
       let error = ''
@@ -109,21 +150,54 @@ const FileUpload: React.FC<FileUploadProps> = ({
       setInternalFiles(updated)
       onChange?.(updated)
 
-      if (onUpload) {
-        onUpload(validFiles).then(() => {
-          const completed = updated.map((f) =>
-            f.status === 'uploading' ? { ...f, progress: 100, status: 'done' as const } : f
-          )
-          setInternalFiles(completed)
-          onChange?.(completed)
+      if (uploadUrl) {
+        const results = await Promise.allSettled(
+          validFiles.map((file) => uploadToCloudinary(file))
+        )
+
+        const completed = uploads.map((upload, index) => {
+          const result = results[index]
+          if (result.status === 'fulfilled') {
+            return {
+              ...upload,
+              progress: 100,
+              status: 'done' as const,
+              public_id: result.value.public_id,
+              secure_url: result.value.secure_url,
+            }
+          }
+          return {
+            ...upload,
+            status: 'error' as const,
+            error: result.reason instanceof Error ? result.reason.message : 'Upload failed',
+          }
         })
+
+        const finalFiles = [...internalFiles, ...completed]
+        setInternalFiles(finalFiles)
+        onChange?.(finalFiles)
+      } else if (onUpload) {
+        try {
+          await onUpload(validFiles)
+          const done = updated.map((f) => ({ ...f, progress: 100, status: 'done' as const }))
+          setInternalFiles(done)
+          onChange?.(done)
+        } catch (err) {
+          const failed = updated.map((f) => ({
+            ...f,
+            status: 'error' as const,
+            error: err instanceof Error ? err.message : 'Upload failed',
+          }))
+          setInternalFiles(failed)
+          onChange?.(failed)
+        }
       } else {
         const done = updated.map((f) => ({ ...f, progress: 100, status: 'done' as const }))
         setInternalFiles(done)
         onChange?.(done)
       }
     },
-    [internalFiles, maxFiles, maxSizeBytes, maxSizeMB, onUpload, onChange]
+    [internalFiles, maxFiles, maxSizeBytes, maxSizeMB, onUpload, onChange, fileTypes, enforceTypes, accept, uploadUrl, folder]
   )
 
   const handleDrop = useCallback(
@@ -231,8 +305,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   {uploaded.status === 'uploading' && (
                     <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
                       <div
-                        className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-                        style={{ width: `${uploaded.progress}%` }}
+                        className="bg-blue-600 h-1.5 rounded-full transition-all duration-300 animate-pulse"
+                        style={{ width: '60%' }}
                       />
                     </div>
                   )}

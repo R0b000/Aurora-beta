@@ -8,6 +8,7 @@ CREATE PROCEDURE [dbo].[usp_Category]
     @slug NVARCHAR(140) = NULL,
     @description NVARCHAR(MAX) = NULL,
     @image_url NVARCHAR(500) = NULL,
+    @public_id NVARCHAR(500) = NULL,
     @parent_id BIGINT = NULL,
     @is_active BIT = NULL
 WITH RECOMPILE
@@ -20,8 +21,8 @@ BEGIN
         
         IF @Flag = 'C' -- Create
         BEGIN
-            INSERT INTO [dbo].[categories] (name, slug, description, image_url, parent_id, is_active)
-            VALUES (@name, @slug, @description, @image_url, @parent_id, ISNULL(@is_active, 1));
+            INSERT INTO [dbo].[categories] (name, slug, description, image_url, public_id, parent_id, is_active)
+            VALUES (@name, @slug, @description, @image_url, @public_id, @parent_id, ISNULL(@is_active, 1));
             
             SELECT SCOPE_IDENTITY() AS id;
         END
@@ -33,6 +34,7 @@ BEGIN
                 slug,
                 description,
                 image_url,
+                public_id,
                 parent_id,
                 is_active,
                 created_at,
@@ -50,6 +52,7 @@ BEGIN
                 slug = ISNULL(@slug, slug),
                 description = ISNULL(@description, description),
                 image_url = ISNULL(@image_url, image_url),
+                public_id = ISNULL(@public_id, public_id),
                 parent_id = ISNULL(@parent_id, parent_id),
                 is_active = ISNULL(@is_active, is_active),
                 updated_at = GETUTCDATE()

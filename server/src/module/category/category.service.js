@@ -1,4 +1,4 @@
-const cloudinarySvc = require("../../services/cloudinary.service");
+const { uploadImageToCloudinary } = require("../../utility/image.util");
 const CategoryModel = require("./category.model");
 
 class CategoryService {
@@ -10,7 +10,7 @@ class CategoryService {
             data.slug = data.name.toLowerCase().replace(/\s+/g, '-') + '-' + timestamp;
 
             if (req.file) {
-                data.image = await cloudinarySvc.uploadFile(req.file.path, '/Category')
+                data.image = await uploadImageToCloudinary(req.file.path, 'Category')
             }
 
             return data;
@@ -29,7 +29,7 @@ class CategoryService {
             }
 
             if (req.file) {
-                data.image = await cloudinarySvc.uploadFile(req.file.path, '/Category')
+                data.image = await uploadImageToCloudinary(req.file.path, 'Category')
             }
 
             return data;
