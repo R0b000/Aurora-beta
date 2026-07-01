@@ -6,6 +6,7 @@ CREATE PROCEDURE [dbo].[usp_Banner]
     @id BIGINT = NULL,
     @title NVARCHAR(190) = NULL,
     @image_url NVARCHAR(500) = NULL,
+    @public_id NVARCHAR(500) = NULL,
     @link_url NVARCHAR(500) = NULL,
     @is_active BIT = NULL,
     @sort_order INT = NULL
@@ -19,8 +20,8 @@ BEGIN
         
         IF @Flag = 'C' -- Create
         BEGIN
-            INSERT INTO [dbo].[banners] (title, image_url, link_url, is_active, sort_order)
-            VALUES (@title, @image_url, @link_url, ISNULL(@is_active, 1), ISNULL(@sort_order, 0));
+            INSERT INTO [dbo].[banners] (title, image_url, public_id, link_url, is_active, sort_order)
+            VALUES (@title, @image_url, @public_id, @link_url, ISNULL(@is_active, 1), ISNULL(@sort_order, 0));
             
             SELECT SCOPE_IDENTITY() AS id;
         END
@@ -30,6 +31,7 @@ BEGIN
                 id,
                 title,
                 image_url AS image_url,
+                public_id AS public_id,
                 link_url AS link_url,
                 position,
                 is_active AS is_active,
@@ -47,6 +49,7 @@ BEGIN
             SET 
                 title = ISNULL(@title, title),
                 image_url = ISNULL(@image_url, image_url),
+                public_id = ISNULL(@public_id, public_id),
                 link_url = ISNULL(@link_url, link_url),
                 is_active = ISNULL(@is_active, is_active),
                 sort_order = ISNULL(@sort_order, sort_order),

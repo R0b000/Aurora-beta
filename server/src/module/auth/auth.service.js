@@ -1,4 +1,4 @@
-const cloudinarySvc = require("../../services/cloudinary.service");
+const { uploadImageToCloudinary } = require("../../utility/image.util");
 const bcrypt = require('bcryptjs');
 const UserModel = require("../user/user.model");
 const { ActivationSessionModel, SessionModel, ForgetPasswordSessionModel } = require("./auth.session.model");
@@ -9,7 +9,7 @@ class AuthService {
             let details = req.body
 
             if (req.file) {
-                details.avatar = await cloudinarySvc.uploadAvatar(req.file.path, "User/");
+                details.avatar = await uploadImageToCloudinary(req.file.path, "User");
             } else {
                 details.avatar = null
             }

@@ -1,4 +1,3 @@
-const cloudinarySvc = require("../../services/cloudinary.service");
 const bannerSvc = require("./banner.service");
 
 class BannerContoller {

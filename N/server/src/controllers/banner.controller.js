@@ -1,19 +1,17 @@
 import * as bannerRepo from '../repositories/banner.repository.js';
-import { uploadSingle } from '../middleware/upload.middleware.js';
+import { deleteFromCloudinary } from '../utils/image.util.js';
 
 export async function createBanner(req, res, next) {
     try {
-        let image_url = null;
-        if (req.file) {
-            image_url = `/uploads/${req.file.filename}`;
-        }
+        const { title, image_url, public_id, url, priority } = req.body;
 
         const banner = await bannerRepo.create({
-            title: req.body.title,
-            image_url: image_url,
-            link_url: req.body.url || null,
+            title: title,
+            image_url: image_url || null,
+            public_id: public_id || null,
+            link_url: url || null,
             position: 0,
-            sort_order: parseInt(req.body.priority) || 0
+            sort_order: parseInt(priority) || 0
         });
 
         return res.status(201).json({
@@ -24,6 +22,9 @@ export async function createBanner(req, res, next) {
             data: banner
         });
     } catch (err) {
+        if (req.body.public_id) {
+            await deleteFromCloudinary(req.body.public_id).catch(() => {});
+        }
         next(err);
     }
 }
@@ -78,17 +79,25 @@ export async function updateBanner(req, res, next) {
             });
         }
 
-        let image_url = existing.image_url;
-        if (req.file) {
-            image_url = `/uploads/${req.file.filename}`;
+        let image_url = existing.image?.secure_url || null;
+        let newPublicId = req.body.public_id || null;
+
+        if (req.body.image_url) {
+            image_url = req.body.image_url;
+            newPublicId = req.body.public_id || null;
+
+            if (existing.image?.public_id && existing.image.public_id !== newPublicId) {
+                await deleteFromCloudinary(existing.image.public_id).catch(() => {});
+            }
         }
 
         await bannerRepo.update(req.params.id, {
             title: req.body.title || existing.title,
-            image_url: image_url,
+            image_url,
+            public_id: newPublicId,
             link_url: req.body.url || existing.link_url,
             isActive: existing.is_active,
-            priority: parseInt(req.body.priority) || existing.sort_order
+            priority: req.body.priority !== undefined ? parseInt(req.body.priority) : existing.sort_order
         });
 
         const updatedBanners = await bannerRepo.findAll();
@@ -101,6 +110,9 @@ export async function updateBanner(req, res, next) {
             data: updated
         });
     } catch (err) {
+        if (req.body.public_id) {
+            await deleteFromCloudinary(req.body.public_id).catch(() => {});
+        }
         next(err);
     }
 }
@@ -114,8 +126,12 @@ export async function deleteBanner(req, res, next) {
                 success: false,
                 code: 422,
                 status: 'Invalid Id',
-                message: 'Banner not found'
+                message: 'Banner not found or already deleted'
             });
+        }
+
+        if (existing.image?.public_id) {
+            await deleteFromCloudinary(existing.image.public_id).catch(() => {});
         }
 
         await bannerRepo.remove(req.params.id);

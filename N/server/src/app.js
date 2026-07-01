@@ -10,6 +10,7 @@ import sellerRoutes from './routes/seller.routes.js';
 import userRoutes from './routes/user.routes.js';
 import cartRoutes from './routes/cart.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,6 +52,9 @@ app.use('/api/auth', authRoutes);
 
 // Admin routes
 app.use('/api/admin', adminRoutes);
+
+// Upload routes (Cloudinary proxy)
+app.use('/api/upload', uploadRoutes);
 
 // Category routes (admin)
 app.use('/api/admin/category', categoryRoutes);

@@ -1,14 +1,15 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
 import adminSvc from "../../../service/admin.service";
 import type { BannerResponse } from "../admin.validator";
+import AdminModal from "../../../component/AdminModal";
 import { Table, Popconfirm, Image } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 const AdminBannerPage = () => {
-    const navigate = useNavigate()
     const [bannerList, setBannerList] = useState<BannerResponse | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchBanners = useCallback(async () => {
@@ -27,15 +28,27 @@ const AdminBannerPage = () => {
     }, []);
 
     const handleAdd = () => {
-        navigate('/admin/banner/create');
+        setEditingItem(null);
+        setIsModalOpen(true);
     };
 
     const handleEdit = (record: any) => {
-        navigate(`/admin/banner/update/${record._id}`);
+        setEditingItem(record);
+        setIsModalOpen(true);
     };
 
     const handleDelete = async (id: string) => {
         await adminSvc.bannerDeleteById(id);
+        fetchBanners();
+    };
+
+    const handleSubmit = async (data: any) => {
+        if (editingItem) {
+            await adminSvc.updateBannerById(data, editingItem._id);
+        } else {
+            await adminSvc.createBanners(data);
+        }
+        setIsModalOpen(false);
         fetchBanners();
     };
 
@@ -93,6 +106,15 @@ const AdminBannerPage = () => {
         },
     ];
 
+    const formFields = [
+        { name: 'title', label: 'Banner Title', placeholder: 'Enter banner title', rules: [{ required: true, message: 'Please enter title' }] },
+        { name: 'url', label: 'Link URL', placeholder: 'Enter link URL', rules: [{ required: true, message: 'Please enter URL' }] },
+    ];
+
+    const initialValues = editingItem
+        ? { title: editingItem.title, url: editingItem.url }
+        : { title: '', url: '' };
+
     return (
         <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
@@ -115,6 +137,15 @@ const AdminBannerPage = () => {
                 locale={{ emptyText: 'No banners found' }}
                 className="text-xs"
                 rowClassName="hover:bg-slate-50"
+            />
+
+            <AdminModal
+                title={editingItem ? 'Edit Banner' : 'Add Banner'}
+                visible={isModalOpen}
+                onCancel={() => setIsModalOpen(false)}
+                onSubmit={handleSubmit}
+                formFields={formFields}
+                initialValues={initialValues}
             />
         </div>
     );

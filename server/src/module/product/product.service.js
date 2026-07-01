@@ -1,4 +1,4 @@
-const cloudinarySvc = require("../../services/cloudinary.service");
+const { uploadImageToCloudinary } = require("../../utility/image.util");
 const ProductModel = require("./product.model");
 
 class ProductService {
@@ -22,7 +22,7 @@ class ProductService {
             data.price = data.price * 100
 
             const imagePromise = req.files.map((items) => {
-                return cloudinarySvc.uploadFile(items.path, '/Product');
+                return uploadImageToCloudinary(items.path, 'Product');
             })
 
             if (req.files && req.files.length > 0) {
@@ -68,7 +68,7 @@ class ProductService {
             let data = req.body;
 
             const imagePromise = req.files.map(items => {
-                return cloudinarySvc.uploadFile(items.path, "/Product")
+                return uploadImageToCloudinary(items.path, 'Product')
             })
 
             if (req.files && req.files.length > 0) {
