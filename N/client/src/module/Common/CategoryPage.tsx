@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { FaPlus, FaEdit, FaTrash, FaTag } from "react-icons/fa";
+import { Input, Modal, Button } from "antd";
 import adminSvc from "../../service/admin.service";
 import type { CategoryResponse } from "../Admin/admin.validator";
-import AdminModal from "../../component/AdminModal";
-import { Table, Popconfirm } from 'antd';
+import { Table, Popconfirm, Form } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import FileUpload from "../../components/ui/FileUpload";
 
 interface CategoryPageProps {
     service?: typeof adminSvc;
@@ -15,6 +16,9 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ service = adminSvc }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
+    const [categoryName, setCategoryName] = useState('');
 
     const fetchCategoryList = useCallback(async () => {
         try {
@@ -31,28 +35,60 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ service = adminSvc }) => {
         fetchCategoryList();
     }, [fetchCategoryList]);
 
-    const handleAdd = () => {
+    const openAddModal = () => {
         setEditingItem(null);
+        setCategoryName('');
+        setUploadedFiles([]);
         setIsModalOpen(true);
     };
 
-    const handleEdit = (record: any) => {
+    const openEditModal = (record: any) => {
         setEditingItem(record);
+        setCategoryName(record.name);
+        if (record.image?.secure_url) {
+            setUploadedFiles([{
+                id: 'existing-category',
+                file: new File([], record.image.public_id || 'category-image'),
+                preview: record.image.secure_url,
+                progress: 100,
+                status: 'done',
+                public_id: record.image.public_id,
+                secure_url: record.image.secure_url,
+            }]);
+        } else {
+            setUploadedFiles([]);
+        }
         setIsModalOpen(true);
+    };
+
+    const handleSubmit = async () => {
+        if (!categoryName.trim()) return;
+
+        setSubmitting(true);
+        try {
+            const payload: any = { name: categoryName }
+            const latest = uploadedFiles[uploadedFiles.length - 1]
+            if (latest?.secure_url) {
+                payload.image_url = latest.secure_url
+                payload.public_id = latest.public_id
+            }
+
+            if (editingItem) {
+                await service.updateCategory(editingItem._id, payload);
+            } else {
+                await service.createCategory(payload);
+            }
+            setIsModalOpen(false);
+            fetchCategoryList();
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const handleDelete = async (id: string) => {
         await service.categoryDeleteById(id);
-        fetchCategoryList();
-    };
-
-    const handleSubmit = async (data: any) => {
-        if (editingItem) {
-            await service.updateCategory(editingItem._id, data);
-        } else {
-            await service.createCategory(data);
-        }
-        setIsModalOpen(false);
         fetchCategoryList();
     };
 
@@ -64,10 +100,14 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ service = adminSvc }) => {
             render: (text: string) => <span className="text-xs">{text}</span>,
         },
         {
-            title: <span className="text-xs font-bold">Slug</span>,
-            dataIndex: 'slug',
-            key: 'slug',
-            render: (text: string) => <span className="text-xs">{text}</span>,
+            title: <span className="text-xs font-bold">Image</span>,
+            dataIndex: 'image',
+            key: 'image',
+            render: (image: any) => image?.secure_url ? (
+                <img src={image.secure_url} width={60} height={40} className="rounded object-cover" />
+            ) : (
+                <span className="text-xs text-slate-400">No image</span>
+            ),
         },
         {
             title: <span className="text-xs font-bold">Status</span>,
@@ -85,7 +125,7 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ service = adminSvc }) => {
             render: (_, record) => (
                 <div className="flex gap-2">
                     <button
-                        onClick={() => handleEdit(record)}
+                        onClick={() => openEditModal(record)}
                         className="p-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100"
                     >
                         <FaEdit className="text-xs" />
@@ -106,20 +146,12 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ service = adminSvc }) => {
         },
     ];
 
-    const formFields = [
-        { name: 'name', label: 'Category Name', placeholder: 'Enter category name', rules: [{ required: true, message: 'Please enter name' }] },
-    ];
-
-    const initialValues = editingItem
-        ? { name: editingItem.name }
-        : { name: '' };
-
     return (
         <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
                 <h2 className="text-xs font-bold text-slate-800">Categories</h2>
                 <button
-                    onClick={handleAdd}
+                    onClick={openAddModal}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-medium hover:bg-blue-700"
                 >
                     <FaPlus className="text-xs" />
@@ -138,14 +170,65 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ service = adminSvc }) => {
                 rowClassName="hover:bg-slate-50"
             />
 
-            <AdminModal
-                title={editingItem ? 'Edit Category' : 'Add Category'}
-                visible={isModalOpen}
+            <Modal
+                title={<span className="text-sm font-bold text-slate-800">{editingItem ? 'Edit Category' : 'Add Category'}</span>}
+                open={isModalOpen}
                 onCancel={() => setIsModalOpen(false)}
-                onSubmit={handleSubmit}
-                formFields={formFields}
-                initialValues={initialValues}
-            />
+                footer={null}
+                width={520}
+                styles={{
+                    header: { paddingBottom: 8, borderBottom: '1px solid #f1f5f9' },
+                    body: { padding: '16px 24px' }
+                }}
+            >
+                <Form layout="vertical" onFinish={handleSubmit}>
+                    <Form.Item
+                        label={<span className="text-xs font-semibold text-slate-700">Category Name</span>}
+                        rules={[{ required: true, message: 'Please enter name' }]}
+                    >
+                        <Input
+                            value={categoryName}
+                            onChange={(e) => setCategoryName(e.target.value)}
+                            placeholder="Enter category name"
+                            className="rounded-md h-8 text-xs"
+                        />
+                    </Form.Item>
+
+                    <div className="mb-4">
+                        <p className="text-xs font-semibold text-slate-700 mb-2">Category Picture</p>
+                        <FileUpload
+                            accept="image/*"
+                            multiple={false}
+                            maxFiles={1}
+                            maxSizeMB={5}
+                            uploadUrl="/api/upload"
+                            folder="Category"
+                            value={uploadedFiles}
+                            onChange={setUploadedFiles}
+                            helperText="Accepted: JPG, PNG, WEBP. Max 5MB."
+                        />
+                    </div>
+
+                    <Form.Item className="mb-0 mt-4">
+                        <div className="flex justify-end gap-2">
+                            <Button
+                                onClick={() => setIsModalOpen(false)}
+                                className="flex items-center gap-1.5 text-xs font-medium"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                loading={submitting}
+                                className="flex items-center gap-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700"
+                            >
+                                {editingItem ? 'Update' : 'Create'}
+                            </Button>
+                        </div>
+                    </Form.Item>
+                </Form>
+            </Modal>
         </div>
     );
 };

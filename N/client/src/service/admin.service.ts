@@ -36,27 +36,23 @@ class AdminService {
         return response.data.data
     }
 
-    async createCategory(formData: any) {
-        const response = await axiosConfig.post('/admin/category', formData)
+    async createCategory(data: { name: string; image_url?: string; public_id?: string }) {
+        const response = await axiosConfig.post('/admin/category', data)
         return response.data
     }
 
-    async updateCategory(id: string, formData: any) {
-        const response = await axiosConfig.put(`/admin/category/${id}`, formData)
+    async updateCategory(id: string, data: { name?: string; description?: string; image_url?: string; public_id?: string }) {
+        const response = await axiosConfig.put(`/admin/category/${id}`, data)
         return response.data
     }
 
-    async createBanners(formData: FormData) {
-        const response = await axiosConfig.post('/admin/banners', formData, {
-            headers: {
-                "Content-Type": 'multipart/form-data'
-            }
-        })
+    async createBanners(data: { title: string; image_url?: string; public_id?: string; url?: string; priority?: number; type?: string; isActive?: boolean; startAt?: string; endAt?: string }) {
+        const response = await axiosConfig.post('/admin/banners', data)
         return response.data
     }
 
-    async updateBannerById(formData: FormData, id: string) {
-        const response = await axiosConfig.put(`/admin/banners/${id}`, formData)
+    async updateBannerById(data: { title?: string; image_url?: string; public_id?: string; url?: string; priority?: number; isActive?: boolean }, id: string) {
+        const response = await axiosConfig.put(`/admin/banners/${id}`, data)
         return response.data
     }
 

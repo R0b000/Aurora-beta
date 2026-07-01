@@ -1,6 +1,5 @@
-import { Image, Input, Select, DatePicker, Upload, type GetProp, type UploadFile, type UploadProps, InputNumber } from "antd";
+import { Input, Select, DatePicker, InputNumber } from "antd";
 import { useState } from "react";
-import { AiOutlinePlus } from "react-icons/ai";
 import { BannerType, BannerValidationDTO } from "../admin.validator";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -8,28 +7,16 @@ import dayjs from "dayjs";
 import adminSvc from "../../../service/admin.service";
 import { useAppContext } from "../../../context/AppContext";
 import { ImSpinner9 } from "react-icons/im";
-
-type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
-
-const getBase64 = (file: FileType): Promise<string> =>
-    new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = (error) => reject(error);
-    }
-    );
+import FileUpload from "../../../components/ui/FileUpload";
 
 const AdminBannerCreatePage = () => {
-    const [previewOpen, setPreviewOpen] = useState(false);
-    const [previewImage, setPreviewImage] = useState('');
+    const [uploadedFiles, setUploadedFiles] = useState<any[]>([])
     const { setBannerAddClick } = useAppContext();
 
     const { handleSubmit, control, formState: { errors, isSubmitting }, getValues } = useForm({
         defaultValues: {
             title: '',
             type: BannerType.Homepage,
-            image: '',
             startAt: dayjs(),
             endAt: dayjs(),
             isActive: true,
@@ -38,50 +25,29 @@ const AdminBannerCreatePage = () => {
         resolver: yupResolver(BannerValidationDTO)
     })
 
-    const [fileList, setFileList] = useState<UploadFile[]>([]);
-
-    const handlePreview = async (file: UploadFile) => {
-        if (!file.url && !file.preview) {
-            file.preview = await getBase64(file.originFileObj as FileType);
-        }
-
-        setPreviewImage(file.url || (file.preview as string));
-        setPreviewOpen(true);
-    };
-
-    const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) =>
-        setFileList(newFileList);
-
-    const uploadButton = (
-        <button style={{ border: 0, background: 'none' }} type="button">
-            <AiOutlinePlus />
-            <div style={{ marginTop: 8 }}>Upload</div>
-        </button>
-    );
-
     const onSubmit = async () => {
         try {
-            const formData = new FormData();
             const allValues = getValues();
 
-            // Convert dayjs objects → string
             const startAt = dayjs(allValues.startAt).toISOString();
             const endAt = dayjs(allValues.endAt).toISOString();
 
-            // Append primitive values
-            formData.append("title", allValues.title);
-            formData.append("type", allValues.type);
-            formData.append("priority", String(allValues.priority));
-            formData.append("isActive", String(allValues.isActive));
-            formData.append("startAt", startAt);
-            formData.append("endAt", endAt);
-
-            // Append image
-            if (fileList.length > 0) {
-                formData.append("image", fileList[0].originFileObj as File);
+            const payload: any = {
+                title: allValues.title,
+                type: allValues.type,
+                priority: allValues.priority,
+                isActive: String(allValues.isActive),
+                startAt: startAt,
+                endAt: endAt,
             }
 
-            await adminSvc.createBanners(formData);
+            const latest = uploadedFiles[uploadedFiles.length - 1]
+            if (latest?.secure_url) {
+                payload.image_url = latest.secure_url
+                payload.public_id = latest.public_id
+            }
+
+            await adminSvc.createBanners(payload)
             setBannerAddClick(false)
         } catch (err) {
             console.log(err);
@@ -208,37 +174,17 @@ const AdminBannerCreatePage = () => {
                         </div>
                         <div className='flex flex-col relative h-[13vh] lg:h-[16vh]'>
                             <p className="text-sm md:text-base px-2">Banner Picture</p>
-                            <Controller
-                                name='image'
-                                control={control}
-                                render={({ field }) => (
-                                    <Upload
-                                        {...field}
-                                        listType="picture-card"
-                                        beforeUpload={() => false}
-                                        fileList={fileList}
-                                        onPreview={handlePreview}
-                                        onChange={handleChange}
-                                        className="bg-white rounded-xl justify-between items-center w-full"
-                                    >
-                                        {fileList.length >= 1 ? null : uploadButton}
-                                    </Upload>
-                                )}
+                            <FileUpload
+                                accept="image/*"
+                                multiple={false}
+                                maxFiles={1}
+                                maxSizeMB={5}
+                                uploadUrl="/api/upload"
+                                folder="Banner"
+                                onChange={setUploadedFiles}
+                                label="Upload Banner Image"
+                                helperText="Accepted: JPG, PNG, WEBP. Max 5MB."
                             />
-                            {previewImage && (
-                                <Image
-                                    wrapperStyle={{ display: 'none' }}
-                                    preview={{
-                                        visible: previewOpen,
-                                        onVisibleChange: (visible) => setPreviewOpen(visible),
-                                        afterOpenChange: (visible) => !visible && setPreviewImage(''),
-                                    }}
-                                    src={previewImage}
-                                />
-                            )}
-                            <div className='absolute bottom-2 left-1 text-red-500/90'>
-                                {errors.image?.message}
-                            </div>
                         </div>
                     </div>
                     <div className="flex w-full h-[6vh]">
